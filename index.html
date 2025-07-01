@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>전공 이상형 월드컵</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-size: 24px; font-family: sans-serif; text-align: center; margin: 0; background: #f9f9f9; }
+    .input-container, .instruction, .category-select, .tournament, .result-area, .round-loading { display: none; margin-top: 50px; }
+    .bold-major { font-weight: bold; font-size: 48px; color: black; }
+    .friend-text { font-size: 24px; color: blue; margin-top: 10px; }
+    .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #555; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: auto; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    table { margin: auto; border-collapse: collapse; margin-top: 20px; }
+    td { border: 1px solid #ccc; padding: 10px 20px; }
+    button { font-size: 24px; margin: 10px; padding: 10px 20px; }
+    .card { display: inline-block; width: 40%; margin: 20px; padding: 30px; border: 2px solid #aaa; border-radius: 10px; background: white; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="input-container" id="inputForm">
+    <input id="school" placeholder="학교명"> 
+    <input id="student_id" placeholder="학번">
+    <input id="student_name" placeholder="이름">
+    <button onclick="showInstruction()">다음</button>
+  </div>
+
+  <div class="instruction" id="instruction">
+    <p>① 이 프로그램은 대학 전공학과에 대한 자신의 관심 순위를 알아보기 위해 제작되었습니다.<br>
+    ② [인문+공통+체육], [자연+공통] 2개 카테고리 중에 하나를 선택하여 진행합니다.<br>
+    ③ 해당 계열의 전공학과가 쌍을 이루어 나타나면, 보다 관심이 있는 학과를 선택하기 바랍니다.<br>
+    ④ 64강부터 시작하며, [인문+공통+체육]은 무작위로 선택된 8개의 학과가 부전승으로 32강에 진출합니다.<br>
+    ⑤ 총 3번까지 결과를 저장하고 라운드를 진행할 수 있으며, 3라운드를 마치면 PDF 파일로 결과를 저장할 수 있습니다.<br>
+    ⑥ 준비가 되었다면 아래 계열을 선택하고 전공학과 이상형 월드컵을 시작해 주세요.</p>
+    <div class="category-select">
+      <button onclick="startCategory('inmun')">인문+공통+체육</button>
+      <button onclick="startCategory('jayeon')">자연+공통</button>
+    </div>
+  </div>
+
+  <div class="round-loading" id="roundLoading">
+    <div class="spinner"></div>
+    <p id="roundText"></p>
+  </div>
+
+  <div class="tournament" id="tournament"></div>
+  <div class="result-area" id="resultArea"></div>
+  <div id="repeatButton"></div>
+  <div id="pdfButton"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://vgnnzehkzbrsatdyoqzf.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let roundData = [];
+    let currentRound = 1;
+    let maxRounds = 3;
+    let userInfo = {};
+    let selectedCategory = '';
+    let roundResults = [];
+
+    document.getElementById('inputForm').style.display = 'block';
+
+    function showInstruction() {
+      userInfo.school = document.getElementById('school').value;
+      userInfo.id = document.getElementById('student_id').value;
+      userInfo.name = document.getElementById('student_name').value;
+      document.getElementById('inputForm').style.display = 'none';
+      document.getElementById('instruction').style.display = 'block';
+    }
+
+    async function startCategory(table) {
+      selectedCategory = table;
+      document.getElementById('instruction').style.display = 'none';
+      document.getElementById('resultArea').style.display = 'none';
+      document.getElementById('repeatButton').style.display = 'none';
+      document.getElementById('pdfButton').style.display = 'none';
+      showLoading('64강');
+
+      let { data, error } = await supabase.from(table).select('*');
+      if (error) return alert('데이터 불러오기 실패');
+
+      data = shuffleArray(data);
+      if (table === 'inmun') {
+        let autoPass = data.slice(0, 8);
+        let others = data.slice(8);
+        roundData = buildTournament([...others.slice(0, 56), ...autoPass]);
+      } else {
+        roundData = buildTournament(data.slice(0, 64));
+      }
+
+      setTimeout(() => {
+        hideLoading();
+        document.getElementById('tournament').style.display = 'block';
+        playRound(roundData);
+      }, 2000);
+    }
+
+    function showLoading(roundName) {
+      document.getElementById('roundLoading').style.display = 'block';
+      document.getElementById('roundText').innerText = `${roundName} 로딩중...`;
+    }
+
+    function hideLoading() {
+      document.getElementById('roundLoading').style.display = 'none';
+    }
+
+    function shuffleArray(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
+
+    function buildTournament(items) {
+      return shuffleArray(items);
+    }
+
+    function playRound(pairs) {
+      const container = document.getElementById('tournament');
+      container.innerHTML = '';
+
+      if (pairs.length === 1) {
+        saveRoundResult(pairs[0]);
+        showSummary();
+        return;
+      }
+
+      const nextRound = [];
+      for (let i = 0; i < pairs.length; i += 2) {
+        const card1 = pairs[i];
+        const card2 = pairs[i + 1];
+
+        const cardA = createCard(card1);
+        const cardB = createCard(card2);
+
+        cardA.onclick = () => {
+          nextRound.push(card1);
+          playNextPair(nextRound, i + 2, pairs);
+        };
+        cardB.onclick = () => {
+          nextRound.push(card2);
+          playNextPair(nextRound, i + 2, pairs);
+        };
+
+        container.appendChild(cardA);
+        container.appendChild(cardB);
+        break;
+      }
+    }
+
+    function playNextPair(nextRound, index, allPairs) {
+      const container = document.getElementById('tournament');
+      container.innerHTML = '';
+
+      if (index >= allPairs.length) {
+        showLoading(`${nextRound.length}강`);
+        setTimeout(() => {
+          hideLoading();
+          playRound(nextRound);
+        }, 2000);
+        return;
+      }
+
+      const card1 = allPairs[index];
+      const card2 = allPairs[index + 1];
+
+      const cardA = createCard(card1);
+      const cardB = createCard(card2);
+
+      cardA.onclick = () => {
+        nextRound.push(card1);
+        playNextPair(nextRound, index + 2, allPairs);
+      };
+      cardB.onclick = () => {
+        nextRound.push(card2);
+        playNextPair(nextRound, index + 2, allPairs);
+      };
+
+      container.appendChild(cardA);
+      container.appendChild(cardB);
+    }
+
+    function createCard(item) {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `<div class='bold-major'>${item.major}</div><div class='friend-text'>${item.friends}</div>`;
+      return div;
+    }
+
+    function saveRoundResult(winner) {
+      if (!roundResults[currentRound - 1]) roundResults[currentRound - 1] = {};
+      roundResults[currentRound - 1].final = winner;
+      roundResults[currentRound - 1].semis = roundData.slice(0, 2);
+      roundResults[currentRound - 1].quarters = roundData.slice(0, 4);
+    }
+
+    function showSummary() {
+      document.getElementById('tournament').style.display = 'none';
+      const result = document.getElementById('resultArea');
+      result.style.display = 'block';
+
+      let html = `<p>${userInfo.school} ${userInfo.id} ${userInfo.name} 님이 선택한 결과입니다</p>`;
+      for (let i = 0; i < roundResults.length; i++) {
+        html += `<h3>Round ${i + 1}</h3>`;
+        html += `<table><tr><td>최종선택</td><td>${roundResults[i].final.major}</td></tr>`;
+        html += `<tr><td>결승진출</td><td>${roundResults[i].semis.filter(x => x.major !== roundResults[i].final.major).map(x => x.major).join(', ')}</td></tr>`;
+        html += `<tr><td>4강진출</td><td>${roundResults[i].quarters.filter(x => !roundResults[i].semis.includes(x)).map(x => x.major).join(', ')}</td></tr>`;
+        html += `</table>`;
+      }
+      result.innerHTML = html;
+
+      const repeatBtn = document.getElementById('repeatButton');
+      if (currentRound < maxRounds) {
+        repeatBtn.innerHTML = '<button onclick="repeatRound()">결과 저장하고 한번 더!</button>';
+        repeatBtn.style.display = 'block';
+      } else {
+        const pdfBtn = document.getElementById('pdfButton');
+        pdfBtn.innerHTML = '<button onclick="downloadPDF()">PDF 저장</button>';
+        pdfBtn.style.display = 'block';
+      }
+    }
+
+    function repeatRound() {
+      currentRound++;
+      startCategory(selectedCategory);
+    }
+
+    function downloadPDF() {
+      const element = document.getElementById('resultArea');
+      html2canvas(element).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jspdf.jsPDF();
+        pdf.addImage(imgData, 'PNG', 10, 10, 190, 0);
+        pdf.save(`${userInfo.id}_${userInfo.name}_이상형월드컵결과.pdf`);
+      });
+    }
+  </script>
+</body>
+</html>
