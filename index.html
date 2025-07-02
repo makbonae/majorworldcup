@@ -4,256 +4,189 @@
   <meta charset="UTF-8">
   <title>전공 이상형 월드컵</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body { font-size: 24px; font-family: sans-serif; text-align: center; margin: 0; background: #f9f9f9; }
-    .input-container, .instruction, .tournament, .result-area, .round-loading { display: none; margin-top: 50px; }
-    .category-select { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
-    .bold-major { font-weight: bold; font-size: 48px; color: black; }
-    .friend-text { font-size: 24px; color: blue; margin-top: 10px; }
-    .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #555; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: auto; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
-    table { margin: auto; border-collapse: collapse; margin-top: 20px; }
-    td { border: 1px solid #ccc; padding: 10px 20px; }
+    .major { font-size: 48px; font-weight: bold; color: black; }
+    .friends { font-size: 18px; color: pink; }
+    .hidden { display: none; }
+    .instructions { margin: 50px 1.5em; text-align: left; white-space: pre-line; }
     button { font-size: 24px; margin: 10px; padding: 10px 20px; }
-    .card { display: inline-block; width: 40%; margin: 20px; padding: 30px; border: 2px solid #aaa; border-radius: 10px; background: white; cursor: pointer; }
+    table { margin: 10px auto; border-collapse: collapse; }
+    td { border: 1px solid #ccc; padding: 10px; }
+    #loading-text { font-size: 32px; font-weight: bold; color: hotpink; }
   </style>
 </head>
 <body>
-  <div class="input-container" id="inputForm">
-    <input id="school" placeholder="학교명">
-    <input id="student_id" placeholder="학번">
-    <input id="student_name" placeholder="이름">
-    <button onclick="showInstruction()">다음</button>
+  <div id="start-screen">
+    <p>학교: <input id="school"></p>
+    <p>학번: <input id="studentId"></p>
+    <p>이름: <input id="name"></p>
+    <button onclick="startInput()">다음</button>
   </div>
 
-  <div class="instruction" id="instruction">
-    <p>① 이 프로그램은 대학 전공학과에 대한 자신의 관심 순위를 알아보기 위해 제작되었습니다.<br>
-    ② [인문+공통+체육], [자연+공통] 2개 카테고리 중 하나를 선택하여 진행합니다.<br>
-    ③ 해당 계열의 전공학과가 쌍을 이루어 나타나면, 보다 관심이 있는 학과를 선택해 주세요.<br>
-    ④ 64강부터 시작하며, [인문+공통+체육]은 무작위로 선택된 8개의 학과가 부전승으로 32강에 진출합니다.<br>
-    ⑤ 총 3번까지 결과를 저장하고 라운드를 반복할 수 있으며, 3라운드를 마치면 PDF로 저장할 수 있습니다.</p>
-    <div class="category-select">
-      <button onclick="startCategory('inmun')">인문+공통+체육</button>
-      <button onclick="startCategory('jayeon')">자연+공통</button>
+  <div id="info-screen" class="hidden">
+    <div class="instructions">
+① 이 프로그램은 대학 전공학과에 대한 자신의 관심 순위를 알아보기 위해 제작되었습니다.
+② [인문+공통+체육], [자연+공통] 2개 카테고리 중 하나를 선택하여 진행합니다.
+③ 해당 계열의 전공학과가 쌍을 이루어 나타나면, 보다 관심 있는 학과를 선택하기 바랍니다.
+④ 64강부터 시작하며, [인문+공통+체육]은 무작위로 선택된 8개의 학과가 부전승으로 32강에 진출합니다.
+⑤ 총 3번까지 결과를 저장하고 라운드를 진행할 수 있으며, 3라운드를 마치면 PDF 파일로 결과를 저장할 수 있습니다.
+⑥ 준비가 되었다면 아래 계열을 선택하고 전공학과 이상형 월드컵을 시작해 주세요.
     </div>
+    <button onclick="startTournament('inmun')">인문+공통+체육</button>
+    <button onclick="startTournament('jayeon')">자연+공통</button>
   </div>
 
-  <div class="round-loading" id="roundLoading">
-    <div class="spinner"></div>
-    <p id="roundText"></p>
+  <div id="loading-screen" class="hidden">
+    <div id="loading-text"></div>
   </div>
 
-  <div class="tournament" id="tournament"></div>
-  <div class="result-area" id="resultArea"></div>
-  <div id="repeatButton"></div>
-  <div id="pdfButton"></div>
+  <div id="tournament-screen" class="hidden">
+    <div id="pair-container"></div>
+  </div>
+
+  <div id="result-screen" class="hidden">
+    <div id="greeting"></div>
+    <div id="results-tables"></div>
+    <button onclick="repeatTournament()">결과 저장하고 한번 더!</button>
+    <button id="pdfBtn" class="hidden" onclick="downloadPDF()">PDF 저장</button>
+  </div>
 
   <script>
-    const SUPABASE_URL = 'https://vgnnzehkzbrsatdyoqzf.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = supabase.createClient(
+      'https://vgmnzehkzbrsatlyozf.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA'
+    );
 
-    let roundData = [];
-    let currentRound = 1;
-    const maxRounds = 3;
-    let userInfo = {};
-    let selectedCategory = '';
-    const roundResults = [];
+    let userInfo = {}; let roundResults = []; let fullData = [];
 
-    document.getElementById('inputForm').style.display = 'block';
-
-    function showInstruction() {
+    function startInput() {
       userInfo.school = document.getElementById('school').value;
-      userInfo.id = document.getElementById('student_id').value;
-      userInfo.name = document.getElementById('student_name').value;
-      document.getElementById('inputForm').style.display = 'none';
-      document.getElementById('instruction').style.display = 'block';
+      userInfo.studentId = document.getElementById('studentId').value;
+      userInfo.name = document.getElementById('name').value;
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('info-screen').classList.remove('hidden');
     }
 
-    async function startCategory(table) {
-      selectedCategory = table;
-      document.getElementById('instruction').style.display = 'none';
-      document.getElementById('resultArea').style.display = 'none';
-      document.getElementById('repeatButton').style.display = 'none';
-      document.getElementById('pdfButton').style.display = 'none';
-      showLoading('64강');
+    async function startTournament(table) {
+      roundResults = [];
+      document.getElementById('info-screen').classList.add('hidden');
+      showRoundLoading('64강');
 
-      let { data, error } = await supabase.from(table).select('*');
-      if (error || !data || data.length < 64) return alert('데이터 불러오기 실패 또는 데이터 부족');
-
-      data = shuffleArray(data);
-      roundData = [];
+      const { data } = await supabase.from(table).select('*');
+      fullData = [...data];
+      shuffle(fullData);
 
       if (table === 'inmun') {
-        if (data.length < 56) return alert('인문 계열은 최소 56개의 학과가 필요합니다.');
-        const autoPass = data.slice(0, 8);
-        const round64Set = data.slice(8, 56);
-        const round64Winners = [];
-        let index = 0;
+        const bye = fullData.splice(0, 8);
+        const matches = [];
+        for (let i = 0; i < 48; i += 2) matches.push([fullData[i], fullData[i + 1]]);
+        const winners = await doPairSelection(matches);
+        fullData = [...bye, ...winners];
+      }
 
-        function play64Round() {
-          if (index >= round64Set.length) {
-            roundData = [...round64Winners, ...autoPass];
-            showLoading('32강');
-            setTimeout(() => {
-              hideLoading();
-              document.getElementById('tournament').style.display = 'block';
-              playRound(roundData);
-            }, 2000);
-            return;
-          }
-          const card1 = round64Set[index];
-          const card2 = round64Set[index + 1];
-          index += 2;
-          const container = document.getElementById('tournament');
-          container.innerHTML = '';
-          const cardA = createCard(card1);
-          const cardB = createCard(card2);
-          cardA.onclick = () => { round64Winners.push(card1); play64Round(); };
-          cardB.onclick = () => { round64Winners.push(card2); play64Round(); };
-          container.appendChild(cardA);
-          container.appendChild(cardB);
-        }
+      await runRounds(fullData);
+    }
 
-        hideLoading();
-        document.getElementById('tournament').style.display = 'block';
-        play64Round();
-      } else {
-        roundData = data.slice(0, 64);
+    async function runRounds(items) {
+      const labels = ['32강', '16강', '8강', '4강', '결승'];
+      let current = [...items];
+
+      for (let i = 0; i < labels.length; i++) {
+        await showRoundLoading(labels[i]);
+        const matches = [];
+        for (let j = 0; j < current.length; j += 2) matches.push([current[j], current[j + 1]]);
+        current = await doPairSelection(matches);
+        saveRoundResult(labels[i], current);
+      }
+      saveRoundResult('최종 선택', current);
+      showResults();
+    }
+
+    function showRoundLoading(label) {
+      return new Promise(res => {
+        document.getElementById('loading-text').innerText = `${label} 로딩중...`;
+        document.getElementById('loading-screen').classList.remove('hidden');
+        document.getElementById('tournament-screen').classList.add('hidden');
         setTimeout(() => {
-          hideLoading();
-          document.getElementById('tournament').style.display = 'block';
-          playRound(roundData);
+          document.getElementById('loading-screen').classList.add('hidden');
+          res();
         }, 2000);
-      }
+      });
     }
 
-    function playRound(pairs) {
-      const container = document.getElementById('tournament');
-      container.innerHTML = '';
-      if (pairs.length === 1) {
-        saveRoundResult(pairs[0]);
-        showSummary();
-        return;
-      }
-      const nextRound = [];
-      let currentPairIndex = 0;
+    function saveRoundResult(label, items) {
+      const used = new Set();
+      roundResults.forEach(r => r.items?.forEach(i => used.add(i.major)));
+      const filtered = items.filter(i => !used.has(i.major));
+      roundResults.push({ roundName: label, items: filtered });
+    }
 
-      function showPair() {
-        if (currentPairIndex >= pairs.length) {
-          const nextLabel = getNextRoundLabel(nextRound.length);
-          showLoading(nextLabel);
-          setTimeout(() => {
-            hideLoading();
-            roundData = nextRound;
-            playRound(nextRound);
-          }, 2000);
-          return;
+    function doPairSelection(pairs) {
+      return new Promise(async resolve => {
+        document.getElementById('pair-container').innerHTML = '';
+        const winners = [];
+        for (const [a, b] of pairs) {
+          const div = document.createElement('div');
+          const btnA = document.createElement('button');
+          const btnB = document.createElement('button');
+          btnA.innerHTML = `<div class="major">${a.major}</div><div class="friends">${a.friends}</div>`;
+          btnB.innerHTML = `<div class="major">${b.major}</div><div class="friends">${b.friends}</div>`;
+          div.appendChild(btnA); div.appendChild(btnB);
+          document.getElementById('pair-container').appendChild(div);
+          document.getElementById('tournament-screen').classList.remove('hidden');
+
+          const winner = await new Promise(res => {
+            btnA.onclick = () => res(a);
+            btnB.onclick = () => res(b);
+          });
+          winners.push(winner);
         }
-        const card1 = pairs[currentPairIndex];
-        const card2 = pairs[currentPairIndex + 1];
-        currentPairIndex += 2;
-        container.innerHTML = '';
-        const cardA = createCard(card1);
-        const cardB = createCard(card2);
-        cardA.onclick = () => { nextRound.push(card1); showPair(); };
-        cardB.onclick = () => { nextRound.push(card2); showPair(); };
-        container.appendChild(cardA);
-        container.appendChild(cardB);
-      }
-
-      showPair();
+        resolve(winners);
+      });
     }
 
-    function getNextRoundLabel(count) {
-      const map = {32:'16강', 16:'8강', 8:'4강', 4:'2강', 2:'1강'};
-      return map[count] || `${count}강`;
+    function showResults() {
+      document.getElementById('tournament-screen').classList.add('hidden');
+      document.getElementById('result-screen').classList.remove('hidden');
+      document.getElementById('greeting').innerText = `${userInfo.school} ${userInfo.studentId} ${userInfo.name} 님이 선택한 결과입니다`;
+      const container = document.getElementById('results-tables');
+      container.innerHTML = '';
+      roundResults.forEach(r => {
+        const tbl = document.createElement('table');
+        const header = tbl.insertRow();
+        header.insertCell().innerText = r.roundName;
+        const row = tbl.insertRow();
+        r.items.forEach(i => row.insertCell().innerText = i.major);
+        container.appendChild(tbl);
+      });
+      if (roundResults.length >= 6) document.getElementById('pdfBtn').classList.remove('hidden');
     }
 
-    function showLoading(roundName) {
-      document.getElementById('roundLoading').style.display = 'block';
-      document.getElementById('tournament').style.display = 'none';
-      let displayName = roundName === '2강' ? '결승' : roundName;
-      if (roundName === '1강') displayName = `${userInfo.name} 님의 선택 결과입니다.`;
-      else displayName += ' 로딩중...';
-      document.getElementById('roundText').innerText = displayName;
-    }
-
-    function hideLoading() {
-      document.getElementById('roundLoading').style.display = 'none';
-    }
-
-    function shuffleArray(arr) {
-      return arr.sort(() => Math.random() - 0.5);
-    }
-
-    function createCard(item) {
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.innerHTML = `<div class='bold-major'>${item.major}</div><div class='friend-text'>${item.friends}</div>`;
-      return div;
-    }
-
-    function saveRoundResult(winner) {
-      const result = {
-        final: winner,
-        semis: roundData.length === 2 ? [...roundData] : [],
-        quarters: roundData.length === 4 ? [...roundData] : [],
-      };
-      roundResults[currentRound - 1] = result;
-    }
-
-    function showSummary() {
-      document.getElementById('tournament').style.display = 'none';
-      const result = document.getElementById('resultArea');
-      result.style.display = 'block';
-
-      let html = `<p>${userInfo.school} ${userInfo.id} ${userInfo.name} 님이 선택한 결과입니다</p>`;
-      for (let i = 0; i < roundResults.length; i++) {
-        const res = roundResults[i];
-        const final = res.final.major;
-        const finals = res.semis.filter(x => x.major !== final).map(x => x.major);
-        const semis = res.quarters.filter(x => !res.semis.includes(x)).map(x => x.major);
-        const quarters = res.quarters.filter(x => ![final, ...finals, ...semis].includes(x.major)).map(x => x.major);
-
-        html += `<h3>Round ${i + 1}</h3><table>`;
-        html += `<tr><td>최종선택</td><td>${final}</td></tr>`;
-        html += `<tr><td>결승진출</td><td>${finals.join(', ')}</td></tr>`;
-        html += `<tr><td>4강진출</td><td>${semis.join(', ')}</td></tr>`;
-        html += `<tr><td>8강진출</td><td>${quarters.join(', ')}</td></tr>`;
-        html += `</table>`;
-      }
-      result.innerHTML = html;
-
-      if (currentRound < maxRounds) {
-        document.getElementById('repeatButton').innerHTML = '<button onclick="repeatRound()">결과 저장하고 한번 더!</button>';
-        document.getElementById('repeatButton').style.display = 'block';
-      } else {
-        document.getElementById('pdfButton').innerHTML = '<button onclick="downloadPDF()">PDF 저장</button>';
-        document.getElementById('pdfButton').style.display = 'block';
-      }
-    }
-
-    function repeatRound() {
-      currentRound++;
-      roundData = [];
-      document.getElementById('resultArea').style.display = 'none';
-      startCategory(selectedCategory);
+    function repeatTournament() {
+      document.getElementById('result-screen').classList.add('hidden');
+      document.getElementById('info-screen').classList.remove('hidden');
     }
 
     function downloadPDF() {
-      const element = document.getElementById('resultArea');
-      html2canvas(element, { scale: 2 }).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`${userInfo.id}_${userInfo.name}_이상형월드컵결과.pdf`);
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text(`${userInfo.school} ${userInfo.studentId} ${userInfo.name} 님이 선택한 결과입니다`, 10, 10);
+      let y = 20;
+      roundResults.forEach(r => {
+        doc.text(r.roundName, 10, y); y += 10;
+        r.items.forEach(i => { doc.text(i.major, 10, y); y += 10; });
+        y += 5;
       });
+      doc.save('전공_월드컵_결과.pdf');
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
     }
   </script>
 </body>
