@@ -195,24 +195,33 @@ function showResult() {
   document.getElementById("resultArea").classList.remove("hidden");
   const tree = document.getElementById("summaryTree");
   tree.innerHTML = `<h2>${userInfo.school} ${userInfo.studentId} ${userInfo.studentName} 님의 선택 결과</h2>`;
-  roundResults.push([currentRoundData[0]]);
-  for (let i = 0; i < roundResults.length; i++) {
-    const data = roundResults[i];
-    const final = data[0]?.major || "";
-    const finals = data.slice(0, 2).map(d => d.major);
-    const semis = data.slice(0, 4).map(d => d.major);
-    const quarters = data.slice(0, 8).map(d => d.major);
-    tree.innerHTML += `
-      <table class='summary-table'>
-        <tr><th colspan='2'>Round ${i + 1} 결과</th></tr>
-        <tr><th>최종 우승</th><td>${final}</td></tr>
-        <tr><th>결승 진출자</th><td>${finals.join(" / ")}</td></tr>
-        <tr><th>4강 진출자</th><td>${semis.join(" / ")}</td></tr>
-        <tr><th>8강 진출자</th><td>${quarters.join(" / ")}</td></tr>
-      </table>`;
-  }
-  if (roundResults.length >= 3) document.getElementById("pdfBtn").classList.remove("hidden");
-  else document.getElementById("nextRoundBtn").classList.remove("hidden");
+
+  const finalWinner = currentRoundData[0];
+  const finals = roundResults.at(-1);
+  const semis = roundResults.at(-2);
+  const quarters = roundResults.at(-3);
+
+  const final = finalWinner?.major || "-";
+  const finalIds = new Set([finalWinner?.id]);
+
+  const finalsOnly = finals?.filter(m => !finalIds.has(m.id)).map(m => m.major) || [];
+  const finalIdsSet = new Set(finals.map(m => m.id));
+  const semisOnly = semis?.filter(m => !finalIdsSet.has(m.id)).map(m => m.major) || [];
+  const semisIdsSet = new Set(semis.map(m => m.id));
+  const quartersOnly = quarters?.filter(m => !semisIdsSet.has(m.id)).map(m => m.major) || [];
+
+  tree.innerHTML += `
+    <table class='summary-table'>
+      <tr><th>최종 우승</th><td>${final}</td></tr>
+      <tr><th>결승 진출자</th><td>${finalsOnly.join(" / ") || "-"}</td></tr>
+      <tr><th>4강 진출자</th><td>${semisOnly.join(" / ") || "-"}</td></tr>
+      <tr><th>8강 진출자</th><td>${quartersOnly.join(" / ") || "-"}</td></tr>
+    </table>`;
+
+  if (roundResults.length >= 3)
+    document.getElementById("pdfBtn").classList.remove("hidden");
+  else
+    document.getElementById("nextRoundBtn").classList.remove("hidden");
 }
 
 function nextRound() {
