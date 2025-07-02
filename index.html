@@ -105,7 +105,7 @@
 
 <script>
 const SUPABASE_URL = 'https://vgnnzehkzbrsatdyoqzf.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA';
+const SUPABASE_KEY = 'ey...';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let userInfo = { school: '', studentId: '', studentName: '' };
@@ -168,7 +168,7 @@ function showTournament(bye) {
     if (index >= pairs.length) {
       currentRoundData = [...selected, ...bye];
       if (currentRoundData.length === 1) return showResult();
-      roundResults.push(selected);
+      roundResults.push([...selected]);
       roundNumber++;
       document.getElementById("tournament").classList.add("hidden");
       startTournament([]);
@@ -194,34 +194,33 @@ function showResult() {
   document.getElementById("tournament").classList.add("hidden");
   document.getElementById("resultArea").classList.remove("hidden");
   const tree = document.getElementById("summaryTree");
-  tree.innerHTML = `<h2>${userInfo.school} ${userInfo.studentId} ${userInfo.studentName} 님의 선택 결과</h2>`;
 
-  const finalWinner = currentRoundData[0];
-  const finals = roundResults.at(-1);
-  const semis = roundResults.at(-2);
-  const quarters = roundResults.at(-3);
+  if (roundResults.length === 1) {
+    tree.innerHTML = `<h2>${userInfo.school} ${userInfo.studentId} ${userInfo.studentName} 님의 선택 결과</h2>`;
+  }
 
-  const final = finalWinner?.major || "-";
-  const finalIds = new Set([finalWinner?.id]);
-
-  const finalsOnly = finals?.filter(m => !finalIds.has(m.id)).map(m => m.major) || [];
-  const finalIdsSet = new Set(finals.map(m => m.id));
-  const semisOnly = semis?.filter(m => !finalIdsSet.has(m.id)).map(m => m.major) || [];
-  const semisIdsSet = new Set(semis.map(m => m.id));
-  const quartersOnly = quarters?.filter(m => !semisIdsSet.has(m.id)).map(m => m.major) || [];
+  const last = roundResults[roundResults.length - 1];
+  const final = last[0];
+  const finals = last.slice(0, 2).filter(d => d.major !== final.major);
+  const semis = last.slice(0, 4).filter(d => !last.slice(0, 2).includes(d));
+  const quarters = last.slice(0, 8).filter(d => !last.slice(0, 4).includes(d));
 
   tree.innerHTML += `
     <table class='summary-table'>
-      <tr><th>최종 우승</th><td>${final}</td></tr>
-      <tr><th>결승 진출자</th><td>${finalsOnly.join(" / ") || "-"}</td></tr>
-      <tr><th>4강 진출자</th><td>${semisOnly.join(" / ") || "-"}</td></tr>
-      <tr><th>8강 진출자</th><td>${quartersOnly.join(" / ") || "-"}</td></tr>
+      <tr><th colspan='2'>Round ${roundResults.length} 결과</th></tr>
+      <tr><th>최종 우승</th><td>${final.major}</td></tr>
+      <tr><th>결승 진출자</th><td>${finals.map(d => d.major).join(" / ")}</td></tr>
+      <tr><th>4강 진출자</th><td>${semis.map(d => d.major).join(" / ")}</td></tr>
+      <tr><th>8강 진출자</th><td>${quarters.map(d => d.major).join(" / ")}</td></tr>
     </table>`;
 
-  if (roundResults.length >= 3)
+  document.getElementById("nextRoundBtn").classList.remove("hidden");
+  document.getElementById("pdfBtn").classList.add("hidden");
+
+  if (roundResults.length === 3) {
+    document.getElementById("nextRoundBtn").classList.add("hidden");
     document.getElementById("pdfBtn").classList.remove("hidden");
-  else
-    document.getElementById("nextRoundBtn").classList.remove("hidden");
+  }
 }
 
 function nextRound() {
