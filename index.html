@@ -16,6 +16,7 @@
     table { margin: 10px auto; border-collapse: collapse; }
     td { border: 1px solid #ccc; padding: 10px; }
     #loading-text { font-size: 32px; font-weight: bold; color: hotpink; }
+    .pair { display: flex; justify-content: center; gap: 50px; margin: 40px 0; }
   </style>
 </head>
 <body>
@@ -100,7 +101,7 @@
     }
 
     async function runRounds(items) {
-      const labels = ['32강', '16강', '8강', '4강', '결승'];
+      const labels = ['64강', '32강', '16강', '8강', '4강', '결승'];
       let current = [...items];
 
       for (let i = 0; i < labels.length; i++) {
@@ -139,11 +140,14 @@
         const winners = [];
         for (const [a, b] of pairs) {
           const div = document.createElement('div');
+          div.className = 'pair';
           const btnA = document.createElement('button');
           const btnB = document.createElement('button');
           btnA.innerHTML = `<div class="major">${a.major}</div><div class="friends">${a.friends}</div>`;
           btnB.innerHTML = `<div class="major">${b.major}</div><div class="friends">${b.friends}</div>`;
           div.appendChild(btnA); div.appendChild(btnB);
+
+          document.getElementById('pair-container').innerHTML = '';
           document.getElementById('pair-container').appendChild(div);
           document.getElementById('tournament-screen').classList.remove('hidden');
 
