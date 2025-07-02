@@ -88,7 +88,12 @@
       if (table === 'inmun') {
         let autoPass = data.slice(0, 8);
         let others = data.slice(8);
-        roundData = buildTournament([...others.slice(0, 56), ...autoPass]);
+        let round64Set = others.slice(0, 48);          // 48개로 24쌍 → 64강 진행
+        let winners64 = [];                            // 64강 승자 목록
+
+        // 64강 라운드 실행 전 저장
+        roundData = buildTournament(round64Set);
+        roundData.push(...autoPass);                   // 부전승 8개 포함하여 32강으로 진출
       } else {
         roundData = buildTournament(data.slice(0, 64));
       }
