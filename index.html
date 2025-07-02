@@ -104,14 +104,13 @@
   </div>
 
 <script>
-const SUPABASE_URL = 'https://vgnnzehkzbrsatdyoqzf.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA';
-const { createClient } = supabase;
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-
+const supabaseClient = supabase.createClient(
+  'https://vgnnzehkzbrsatdyoqzf.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA'
+);
 
 let userInfo = { school: '', studentId: '', studentName: '' };
-let results = [], roundNumber = 1, currentTable = '';
+let roundResults = [], roundNumber = 1, currentTable = '', latestData = [];
 
 function showInstructions() {
   userInfo.school = document.getElementById('school').value.trim();
@@ -127,12 +126,13 @@ function showInstructions() {
 async function startGame(tableName) {
   currentTable = tableName;
   const { data, error } = await supabaseClient.from(tableName).select('*');
-  console.log(data)
   if (error || !data || data.length === 0) {
     alert("데이터 불러오기 실패"); return;
   }
   const majors = shuffleArray(data);
-  startTournament(tableName === 'inmun' ? prepareInmunData(majors) : majors.slice(0, 64));
+  const startData = (tableName === 'inmun') ? prepareInmunData(majors) : majors.slice(0, 64);
+  latestData = startData;
+  startTournament(startData);
 }
 
 function prepareInmunData(data) {
@@ -147,7 +147,7 @@ function prepareInmunData(data) {
 function startTournament(data) {
   document.getElementById("instruction").classList.add("hidden");
   document.getElementById("roundNotice").classList.remove("hidden");
-  document.getElementById("roundTitle").innerText = `${64 / Math.pow(2, roundNumber - 1)}강 로딩 중...`;
+  document.getElementById("roundTitle").innerText = `${getRoundTitle()} 로딩 중...`;
   setTimeout(() => {
     document.getElementById("roundNotice").classList.add("hidden");
     document.getElementById("tournament").classList.remove("hidden");
@@ -172,15 +172,11 @@ function showTournament(data) {
     if (index >= pairs.length) {
       const nextData = [...selected];
       if (Array.isArray(data)) nextData.push(...data);
-      results.push({
-        final: selected[0],
-        finals: selected.slice(0, 2),
-        semis: selected.slice(0, 4),
-        quarters: selected.slice(0, 8)
-      });
+      roundResults.push(selected);
       if (nextData.length === 1) return showResult();
       roundNumber++;
       document.getElementById("tournament").classList.add("hidden");
+      latestData = nextData;
       startTournament(nextData);
       return;
     }
@@ -201,18 +197,23 @@ function showTournament(data) {
   showPair(0);
 }
 
+function getRoundTitle() {
+  const titles = { 1: "64강", 2: "32강", 3: "16강", 4: "8강", 5: "4강", 6: "결승" };
+  return titles[roundNumber] || `${Math.pow(2, 7 - roundNumber)}강`;
+}
+
 function showResult() {
   document.getElementById("tournament").classList.add("hidden");
   document.getElementById("resultArea").classList.remove("hidden");
   const tree = document.getElementById("summaryTree");
   tree.innerHTML = "<h2>" + userInfo.school + " " + userInfo.studentId + " " + userInfo.studentName + " 님이 선택한 결과입니다</h2>";
 
-  for (let i = 0; i < results.length; i++) {
-    const round = results[i];
-    const finals = round.finals.map(d => d.major);
-    const semis = round.semis.map(d => d.major);
-    const quarters = round.quarters.map(d => d.major);
-    const final = round.final.major;
+  for (let i = 0; i < roundResults.length; i++) {
+    const data = roundResults[i];
+    const finals = data.slice(0, 2).map(d => d.major);
+    const semis = data.slice(0, 4).map(d => d.major);
+    const quarters = data.slice(0, 8).map(d => d.major);
+    const final = data[0].major;
     tree.innerHTML += `
       <table class='summary-table'>
         <tr><th colspan='2'>Round ${i + 1} 결과</th></tr>
@@ -223,7 +224,7 @@ function showResult() {
       </table>`;
   }
 
-  if (results.length >= 3) document.getElementById("pdfBtn").classList.remove("hidden");
+  if (roundResults.length >= 3) document.getElementById("pdfBtn").classList.remove("hidden");
   else document.getElementById("nextRoundBtn").classList.remove("hidden");
 }
 
@@ -232,8 +233,6 @@ function nextRound() {
   document.getElementById("resultArea").classList.add("hidden");
   document.getElementById("pdfBtn").classList.add("hidden");
   document.getElementById("nextRoundBtn").classList.add("hidden");
-  
-  // 마지막에 우승한 데이터를 가져와서 다시 시작
   const lastRound = roundResults[roundResults.length - 1];
   const shuffled = shuffleArray(lastRound);
   startTournament(shuffled);
