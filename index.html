@@ -167,6 +167,7 @@ function runMatch(data, bye) {
   let selected = [];
   function showPair(index) {
     if (index >= pairs.length) {
+      roundResults.push([...selected]);
       roundData = [...selected, ...bye];
       if (roundData.length === 1) {
         recordResult(roundData[0]);
