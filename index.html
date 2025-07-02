@@ -144,8 +144,13 @@ async function startGame(tableName) {
 
 function nextStage() {
   const total = roundData.length + (roundStages.bye ? roundStages.bye.length : 0);
+
+  // 🔽 이전 화면 사라지게 처리
+  document.getElementById("tournament").classList.add("hidden");
+
   document.getElementById("roundTitle").innerText = `${total}강 로딩 중...`;
   document.getElementById("roundNotice").classList.remove("hidden");
+
   setTimeout(() => {
     document.getElementById("roundNotice").classList.add("hidden");
     document.getElementById("tournament").classList.remove("hidden");
@@ -186,12 +191,24 @@ function runMatch(data, bye) {
   showPair(0);
 }
 
-function recordResult(finalWord) {
-  const final = finalWord.major;
-  const finals = roundData.filter(item => item.major !== final).slice(0, 1);
-  const semis = roundData.filter(item => !finals.includes(item) && item.major !== final).slice(0, 2);
-  const quarters = roundData.filter(item => !finals.includes(item) && !semis.includes(item) && item.major !== final).slice(0, 4);
-  results.push({ final, finals, semis, quarters });
+function recordResult(finalWinner) {
+  const final = finalWinner;
+  const finals = roundData.filter(item => item !== final).slice(0, 1);
+  const finalsSet = new Set([final.id, ...finals.map(f => f.id)]);
+
+  const semis = roundResults.at(-1) || [];
+  const semisOnly = semis.filter(item => !finalsSet.has(item.id)).slice(0, 2);
+  const semisSet = new Set(semis.map(s => s.id));
+
+  const quarters = roundResults.at(-2) || [];
+  const quartersOnly = quarters.filter(item => !semisSet.has(item.id)).slice(0, 4);
+
+  results.push({
+    final: final.major,
+    finals: finals.map(f => f.major),
+    semis: semisOnly.map(s => s.major),
+    quarters: quartersOnly.map(q => q.major)
+  });
 }
 
 function showResults() {
