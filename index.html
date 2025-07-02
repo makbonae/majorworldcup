@@ -5,6 +5,7 @@
   <title>전공 이상형 월드컵</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="icon" href="data:,">
   <style>
     body { font-size: 24px; font-family: sans-serif; text-align: center; margin: 0; background: #f9f9f9; }
     .major { font-size: 48px; font-weight: bold; color: black; }
@@ -27,12 +28,12 @@
 
   <div id="info-screen" class="hidden">
     <div class="instructions">
-① 이 프로그램은 대학 전공학과에 대한 자신의 관심 순위를 알아보기 위해 제작되었습니다.
-② [인문+공통+체육], [자연+공통] 2개 카테고리 중 하나를 선택하여 진행합니다.
-③ 해당 계열의 전공학과가 쌍을 이루어 나타나면, 보다 관심 있는 학과를 선택하기 바랍니다.
-④ 64강부터 시작하며, [인문+공통+체육]은 무작위로 선택된 8개의 학과가 부전승으로 32강에 진출합니다.
-⑤ 총 3번까지 결과를 저장하고 라운드를 진행할 수 있으며, 3라운드를 마치면 PDF 파일로 결과를 저장할 수 있습니다.
-⑥ 준비가 되었다면 아래 계열을 선택하고 전공학과 이상형 월드컵을 시작해 주세요.
+      ① 이 프로그램은 대학 전공학과에 대한 자신의 관심 순위를 알아보기 위해 제작되었습니다.
+      ② [인문+공통+체육], [자연+공통] 2개 카테고리 중 하나를 선택하여 진행합니다.
+      ③ 해당 계열의 전공학과가 쌍을 이루어 나타나면, 보다 관심 있는 학과를 선택하기 바랍니다.
+      ④ 64강부터 시작하며, [인문+공통+체육]은 무작위로 선택된 8개의 학과가 부전승으로 32강에 진출합니다.
+      ⑤ 총 3번까지 결과를 저장하고 라운드를 진행할 수 있으며, 3라운드를 마치면 PDF 파일로 결과를 저장할 수 있습니다.
+      ⑥ 준비가 되었다면 아래 계열을 선택하고 전공학과 이상형 월드컵을 시작해 주세요.
     </div>
     <button onclick="startTournament('inmun')">인문+공통+체육</button>
     <button onclick="startTournament('jayeon')">자연+공통</button>
@@ -54,12 +55,15 @@
   </div>
 
   <script>
-    const supabase = supabase.createClient(
+    let userInfo = {};
+    let roundResults = [];
+    let fullData = [];
+
+    const { createClient } = supabase:
+    const supabaseClient = createClient(
       'https://vgmnzehkzbrsatlyozf.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA'
     );
-
-    let userInfo = {}; let roundResults = []; let fullData = [];
 
     function startInput() {
       userInfo.school = document.getElementById('school').value;
@@ -74,7 +78,7 @@
       document.getElementById('info-screen').classList.add('hidden');
       showRoundLoading('64강');
 
-      const { data } = await supabase.from(table).select('*');
+      const { data } = await supabaseClient.from(table).select('*');
       fullData = [...data];
       shuffle(fullData);
 
