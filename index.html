@@ -17,6 +17,7 @@
     td { border: 1px solid #ccc; padding: 10px; }
     #loading-text { font-size: 32px; font-weight: bold; color: hotpink; }
     .pair { display: flex; justify-content: center; gap: 50px; margin: 40px 0; }
+    .card { width: 300px; height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 2px solid #ccc; border-radius: 10px; padding: 10px; box-sizing: border-box; }
   </style>
 </head>
 <body>
@@ -128,10 +129,7 @@
     }
 
     function saveRoundResult(label, items) {
-      const used = new Set();
-      roundResults.forEach(r => r.items?.forEach(i => used.add(i.major)));
-      const filtered = items.filter(i => !used.has(i.major));
-      roundResults.push({ roundName: label, items: filtered });
+      roundResults.push({ roundName: label, items: [...items] });
     }
 
     function doPairSelection(pairs) {
@@ -143,6 +141,8 @@
           div.className = 'pair';
           const btnA = document.createElement('button');
           const btnB = document.createElement('button');
+          btnA.className = 'card';
+          btnB.className = 'card';
           btnA.innerHTML = `<div class="major">${a.major}</div><div class="friends">${a.friends}</div>`;
           btnB.innerHTML = `<div class="major">${b.major}</div><div class="friends">${b.friends}</div>`;
           div.appendChild(btnA); div.appendChild(btnB);
@@ -164,18 +164,36 @@
     function showResults() {
       document.getElementById('tournament-screen').classList.add('hidden');
       document.getElementById('result-screen').classList.remove('hidden');
-      document.getElementById('greeting').innerText = `${userInfo.school} ${userInfo.studentId} ${userInfo.name} 님이 선택한 결과입니다`;
+
+      const greeting = `${userInfo.school} ${userInfo.studentId} ${userInfo.name} 님이 선택한 결과입니다`;
+      document.getElementById('greeting').innerText = greeting;
+
+      const used = new Set();
+      const resultRows = ['최종 선택', '결승', '4강', '8강'];
       const container = document.getElementById('results-tables');
       container.innerHTML = '';
-      roundResults.forEach(r => {
-        const tbl = document.createElement('table');
-        const header = tbl.insertRow();
-        header.insertCell().innerText = r.roundName;
-        const row = tbl.insertRow();
-        r.items.forEach(i => row.insertCell().innerText = i.major);
-        container.appendChild(tbl);
+
+      const table = document.createElement('table');
+
+      resultRows.forEach(label => {
+        const result = roundResults.find(r => r.roundName.includes(label));
+        if (result) {
+          const row = table.insertRow();
+          row.insertCell().innerText = label;
+          result.items.forEach(item => {
+            if (!used.has(item.major)) {
+              used.add(item.major);
+              row.insertCell().innerText = item.major;
+            }
+          });
+        }
       });
-      if (roundResults.length >= 6) document.getElementById('pdfBtn').classList.remove('hidden');
+
+      container.appendChild(table);
+
+      if (roundResults.length >= 6) {
+        document.getElementById('pdfBtn').classList.remove('hidden');
+      }
     }
 
     function repeatTournament() {
