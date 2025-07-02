@@ -100,7 +100,9 @@ const SUPABASE_URL = 'https://vgnnzehkzbrsatdyoqzf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA'; // 실제 키로 대체
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let userInfo = {}, currentTable = '', roundData = [], roundStages = {}, roundResults = [], results = [];
+let userInfo = {}, currentTable = '', roundData = [], roundStages = {};
+let roundResults = [], results = [];
+
 
 function showInstructions() {
   userInfo = {
@@ -125,7 +127,7 @@ async function startGame(table) {
     roundData = majors.slice(0, 64);
     roundStages.bye = [];
   }
-  results = []; roundResults = [];
+  results = []; 
   document.getElementById("instruction").classList.add("hidden");
   nextStage();
 }
@@ -172,20 +174,26 @@ function runMatch(data, bye) {
 
 function recordResult(finalWinner) {
   const final = finalWinner;
-  const finals = roundData.filter(item => item !== final).slice(0, 1);
-  const finalsSet = new Set([final.id, ...finals.map(f => f.id)]);
-  const semis = roundResults.at(-1) || [];
-  const semisOnly = semis.filter(item => !finalsSet.has(item.id)).slice(0, 2);
-  const semisSet = new Set(semis.map(s => s.id));
-  const quarters = roundResults.at(-2) || [];
-  const quartersOnly = quarters.filter(item => !semisSet.has(item.id)).slice(0, 4);
+  const last = roundResults.at(-1) || [];
+  const prev = roundResults.at(-2) || [];
+  const preprev = roundResults.at(-3) || [];
+
+  const finals = last.filter(x => x.id !== final.id).slice(0, 1);
+  const finalsId = new Set([final.id, ...finals.map(f => f.id)]);
+  
+  const semis = prev.filter(x => !finalsId.has(x.id)).slice(0, 2);
+  const semisId = new Set([...finalsId, ...semis.map(s => s.id)]);
+  
+  const quarters = preprev.filter(x => !semisId.has(x.id)).slice(0, 4);
+
   results.push({
     final: final.major,
     finals: finals.map(f => f.major),
-    semis: semisOnly.map(s => s.major),
-    quarters: quartersOnly.map(q => q.major)
+    semis: semis.map(s => s.major),
+    quarters: quarters.map(q => q.major)
   });
 }
+
 
 function showResults() {
   document.getElementById("tournament").classList.add("hidden");
@@ -209,6 +217,7 @@ function showResults() {
 function nextRound() {
   roundData = [];
   roundStages = {};
+  roundResults = [];  // ✅ 1회 게임이 끝나고, 새로운 회차를 시작할 때 초기화
   document.getElementById("resultArea").classList.add("hidden");
   document.getElementById("pdfBtn").classList.add("hidden");
   document.getElementById("nextRoundBtn").classList.add("hidden");
