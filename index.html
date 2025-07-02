@@ -16,7 +16,7 @@
       font-size: 24px;
     }
     .hidden { display: none; }
-    .input-container, .instruction, .category-select, .tournament, .result-area, .round-loading, .round-notice {
+    .input-container, .instruction, .category-select, .tournament, .result-area, .round-notice {
       margin-top: 50px;
     }
     .input-container input { font-size: 20px; padding: 8px; margin: 10px; }
@@ -31,15 +31,8 @@
       box-sizing: border-box;
       min-width: 200px;
     }
-    .major {
-      font-size: 48px;
-      font-weight: bold;
-      color: black;
-    }
-    .friends {
-      font-size: 18px;
-      color: hotpink;
-    }
+    .major { font-size: 48px; font-weight: bold; color: black; }
+    .friends { font-size: 18px; color: hotpink; }
     .button { font-size: 24px; padding: 12px 24px; margin: 10px; }
     .summary-table {
       margin: 30px auto;
@@ -68,100 +61,90 @@
   </style>
 </head>
 <body>
-  <div class="input-container" id="inputForm">
-    <input id="school" placeholder="학교" />
-    <input id="studentId" placeholder="학번" />
-    <input id="studentName" placeholder="이름" />
-    <button onclick="showInstructions()">다음</button>
-  </div>
+<div class="input-container" id="inputForm">
+  <input id="school" placeholder="학교" />
+  <input id="studentId" placeholder="학번" />
+  <input id="studentName" placeholder="이름" />
+  <button onclick="showInstructions()">다음</button>
+</div>
 
-  <div id="instruction" class="instruction hidden">
-    <p style="text-align: left; padding-left: 1.5em; white-space: pre-line">
+<div id="instruction" class="instruction hidden">
+  <p style="text-align: left; padding-left: 1.5em; white-space: pre-line">
 ① 이 프로그램은 대학 전공학과에 대한 자신의 관심 순위를 알아보기 위해 제작되었습니다.
 ② [인문+공통+체육], [자연+공통] 2개 카테고리 중에 하나를 선택하여 진행합니다.
 ③ 해당 계열의 전공학과가 쌍을 이루어 나타나면, 보다 관심이 있는 학과를 선택하기 바랍니다.
 ④ 64강부터 시작하며, [인문+공통+체육]은 무작위로 선택된 8개의 학과가 부전승으로 32강에 진출합니다.
 ⑤ 총 3번까지 결과를 저장하고 라운드를 진행할 수 있으며, 3라운드를 마치면 PDF 파일로 결과를 저장할 수 있습니다.
 ⑥ 준비가 되었다면 아래 계열을 선택하고 전공학과 이상형 월드컵을 시작해 주세요.
-    </p>
-    <div class="category-select">
-      <button onclick="startGame('inmun')" class="button">인문+공통+체육</button>
-      <button onclick="startGame('jayeon')" class="button">자연+공통</button>
-    </div>
+  </p>
+  <div class="category-select">
+    <button onclick="startGame('inmun')" class="button">인문+공통+체육</button>
+    <button onclick="startGame('jayeon')" class="button">자연+공통</button>
   </div>
+</div>
 
-  <div id="roundNotice" class="round-notice hidden">
-    <div id="roundTitle" style="font-size: 48px; color: pink;"></div>
-    <div class="spinner"></div>
-  </div>
+<div id="roundNotice" class="round-notice hidden">
+  <div id="roundTitle" style="font-size: 48px; color: pink;"></div>
+  <div class="spinner"></div>
+</div>
 
-  <div id="tournament" class="tournament hidden"></div>
-
-  <div id="resultArea" class="result-area hidden">
-    <div id="summaryTree"></div>
-    <button id="nextRoundBtn" class="button" onclick="nextRound()">결과 저장하고 한번 더!</button>
-    <button id="pdfBtn" class="button hidden" onclick="downloadPDF()">PDF 저장</button>
-  </div>
+<div id="tournament" class="tournament hidden"></div>
+<div id="resultArea" class="result-area hidden">
+  <div id="summaryTree"></div>
+  <button id="nextRoundBtn" class="button" onclick="nextRound()">결과 저장하고 한번 더!</button>
+  <button id="pdfBtn" class="button hidden" onclick="downloadPDF()">PDF 저장</button>
+</div>
 
 <script>
 const SUPABASE_URL = 'https://vgnnzehkzbrsatdyoqzf.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_KEY = 'your-key-here'; // 실제 키로 대체
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let userInfo = { school: '', studentId: '', studentName: '' };
-let results = [], currentTable = '', roundData = [], roundStages = {};
+let userInfo = {}, currentTable = '', roundData = [], roundStages = {}, roundResults = [], results = [];
 
 function showInstructions() {
-  userInfo.school = document.getElementById('school').value.trim();
-  userInfo.studentId = document.getElementById('studentId').value.trim();
-  userInfo.studentName = document.getElementById('studentName').value.trim();
-  if (!userInfo.school || !userInfo.studentId || !userInfo.studentName) {
-    alert("모든 정보를 입력해 주세요."); return;
-  }
+  userInfo = {
+    school: document.getElementById('school').value.trim(),
+    studentId: document.getElementById('studentId').value.trim(),
+    studentName: document.getElementById('studentName').value.trim()
+  };
+  if (!userInfo.school || !userInfo.studentId || !userInfo.studentName) return alert("모든 정보를 입력해 주세요.");
   document.getElementById("inputForm").classList.add("hidden");
   document.getElementById("instruction").classList.remove("hidden");
 }
 
-async function startGame(tableName) {
-  currentTable = tableName;
-  const { data, error } = await supabaseClient.from(tableName).select('*');
-  if (error || !data || data.length === 0) {
-    alert("데이터 불러오기 실패"); return;
-  }
+async function startGame(table) {
+  currentTable = table;
+  const { data, error } = await supabase.from(table).select('*');
+  if (error || !data || data.length === 0) return alert("데이터 불러오기 실패");
   const majors = shuffleArray(data);
-  if (tableName === 'inmun') {
-    const bye = majors.slice(0, 8);
+  if (table === 'inmun') {
+    roundStages.bye = majors.slice(0, 8);
     roundData = majors.slice(8, 56);
-    roundStages = { bye };
   } else {
     roundData = majors.slice(0, 64);
-    roundStages = {};
+    roundStages.bye = [];
   }
-  results = [];
+  results = []; roundResults = [];
   document.getElementById("instruction").classList.add("hidden");
   nextStage();
 }
 
 function nextStage() {
-  const total = roundData.length + (roundStages.bye ? roundStages.bye.length : 0);
-
-  // 🔽 이전 화면 사라지게 처리
+  const total = roundData.length + (roundStages.bye?.length || 0);
   document.getElementById("tournament").classList.add("hidden");
-
   document.getElementById("roundTitle").innerText = `${total}강 로딩 중...`;
   document.getElementById("roundNotice").classList.remove("hidden");
-
   setTimeout(() => {
     document.getElementById("roundNotice").classList.add("hidden");
     document.getElementById("tournament").classList.remove("hidden");
-    runMatch(roundData, roundStages.bye || []);
+    runMatch(roundData, roundStages.bye);
     roundStages.bye = [];
   }, 1500);
 }
 
 function runMatch(data, bye) {
   const container = document.getElementById("tournament");
-  container.innerHTML = "";
   const pairs = [];
   for (let i = 0; i < data.length; i += 2) pairs.push([data[i], data[i + 1]]);
   let selected = [];
@@ -169,17 +152,12 @@ function runMatch(data, bye) {
     if (index >= pairs.length) {
       roundResults.push([...selected]);
       roundData = [...selected, ...bye];
-      if (roundData.length === 1) {
-        recordResult(roundData[0]);
-        return showResults();
-      }
-      nextStage();
-      return;
+      if (roundData.length === 1) { recordResult(roundData[0]); return showResults(); }
+      nextStage(); return;
     }
     const [a, b] = pairs[index];
     container.innerHTML = '';
-    const row = document.createElement('div');
-    row.className = 'card-container';
+    const row = document.createElement('div'); row.className = 'card-container';
     [a, b].forEach(cardData => {
       const card = document.createElement('div');
       card.className = 'card';
@@ -196,14 +174,11 @@ function recordResult(finalWinner) {
   const final = finalWinner;
   const finals = roundData.filter(item => item !== final).slice(0, 1);
   const finalsSet = new Set([final.id, ...finals.map(f => f.id)]);
-
   const semis = roundResults.at(-1) || [];
   const semisOnly = semis.filter(item => !finalsSet.has(item.id)).slice(0, 2);
   const semisSet = new Set(semis.map(s => s.id));
-
   const quarters = roundResults.at(-2) || [];
   const quartersOnly = quarters.filter(item => !semisSet.has(item.id)).slice(0, 4);
-
   results.push({
     final: final.major,
     finals: finals.map(f => f.major),
@@ -222,9 +197,9 @@ function showResults() {
     <table class='summary-table'>
       <tr><th colspan='2'>Round ${i + 1} 결과</th></tr>
       <tr><th>최종 우승</th><td>${r.final}</td></tr>
-      <tr><th>결승 진출자</th><td>${r.finals.map(f => f.major || f).join(" / ")}</td></tr>
-      <tr><th>4강 진출자</th><td>${r.semis.map(s => s.major || s).join(" / ")}</td></tr>
-      <tr><th>8강 진출자</th><td>${r.quarters.map(q => q.major || q).join(" / ")}</td></tr>
+      <tr><th>결승 진출자</th><td>${r.finals.join(" / ")}</td></tr>
+      <tr><th>4강 진출자</th><td>${r.semis.join(" / ")}</td></tr>
+      <tr><th>8강 진출자</th><td>${r.quarters.join(" / ")}</td></tr>
     </table>`;
   });
   document.getElementById("pdfBtn").classList.toggle("hidden", results.length < 3);
