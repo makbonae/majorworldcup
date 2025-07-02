@@ -232,7 +232,11 @@ function nextRound() {
   document.getElementById("resultArea").classList.add("hidden");
   document.getElementById("pdfBtn").classList.add("hidden");
   document.getElementById("nextRoundBtn").classList.add("hidden");
-  startGame(currentTable);
+  
+  // 마지막에 우승한 데이터를 가져와서 다시 시작
+  const lastRound = roundResults[roundResults.length - 1];
+  const shuffled = shuffleArray(lastRound);
+  startTournament(shuffled);
 }
 
 function shuffleArray(arr) {
