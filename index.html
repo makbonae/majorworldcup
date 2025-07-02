@@ -9,7 +9,7 @@
   <style>
     body { font-size: 24px; font-family: sans-serif; text-align: center; margin: 0; background: #f9f9f9; }
     .input-container, .instruction, .tournament, .result-area, .round-loading { display: none; margin-top: 50px; }
-    .category-select {display: flex; justify-content: center; gap: 20px; margin-top: 20px;}
+    .category-select { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
     .bold-major { font-weight: bold; font-size: 48px; color: black; }
     .friend-text { font-size: 24px; color: blue; margin-top: 10px; }
     .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #555; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: auto; }
@@ -56,12 +56,8 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let roundData = [];
-    let currentRound = 1;
-    let maxRounds = 3;
-    let userInfo = {};
-    let selectedCategory = '';
-    let roundResults = [];
+    let roundData = [], currentRound = 1, maxRounds = 3;
+    let userInfo = {}, selectedCategory = '', roundResults = [];
 
     document.getElementById('inputForm').style.display = 'block';
 
@@ -87,17 +83,16 @@
       data = shuffleArray(data);
 
       if (table === 'inmun') {
-        let autoPass = data.slice(0, 8);              // 부전승 8명
-        let others = data.slice(8);                  // 나머지 학과들
-        let round64Set = others.slice(0, 48);        // 48명으로 64강 진행 (24쌍)
-
-        let round64Winners = [];
-        let index = 0;
+        let autoPass = data.slice(0, 8);
+        let others = data.slice(8);
+        let round64Set = others.slice(0, 48);
+        let round64Winners = [], index = 0;
 
         function play64Round() {
           if (index >= round64Set.length) {
-            roundData = [...round64Winners, ...autoPass]; // 64강 승자 + 부전승 → 32강
+            roundData = [...round64Winners, ...autoPass];
             showLoading('32강');
+            document.getElementById('tournament').style.display = 'none';
             setTimeout(() => {
               hideLoading();
               document.getElementById('tournament').style.display = 'block';
@@ -116,15 +111,8 @@
           const cardA = createCard(card1);
           const cardB = createCard(card2);
 
-          cardA.onclick = () => {
-            round64Winners.push(card1);
-            play64Round();
-          };
-
-          cardB.onclick = () => {
-            round64Winners.push(card2);
-            play64Round();
-          };
+          cardA.onclick = () => { round64Winners.push(card1); play64Round(); };
+          cardB.onclick = () => { round64Winners.push(card2); play64Round(); };
 
           container.appendChild(cardA);
           container.appendChild(cardB);
@@ -145,7 +133,11 @@
 
     function showLoading(roundName) {
       document.getElementById('roundLoading').style.display = 'block';
-      document.getElementById('roundText').innerText = `${roundName} 로딩중...`;
+      document.getElementById('tournament').style.display = 'none';
+      let displayName = roundName === '2강' ? '결승' :
+                        roundName === '1강' ? `${userInfo.name} 님의 선택 결과 입니다.` :
+                        `${roundName} 로딩중...`;
+      document.getElementById('roundText').innerText = displayName;
     }
 
     function hideLoading() {
@@ -201,6 +193,7 @@
         showLoading(`${nextRound.length}강`);
         setTimeout(() => {
           hideLoading();
+          document.getElementById('tournament').style.display = 'block';
           playRound(nextRound);
         }, 2000);
         return;
@@ -212,14 +205,8 @@
       const cardA = createCard(card1);
       const cardB = createCard(card2);
 
-      cardA.onclick = () => {
-        nextRound.push(card1);
-        playNextPair(nextRound, index + 2, allPairs);
-      };
-      cardB.onclick = () => {
-        nextRound.push(card2);
-        playNextPair(nextRound, index + 2, allPairs);
-      };
+      cardA.onclick = () => { nextRound.push(card1); playNextPair(nextRound, index + 2, allPairs); };
+      cardB.onclick = () => { nextRound.push(card2); playNextPair(nextRound, index + 2, allPairs); };
 
       container.appendChild(cardA);
       container.appendChild(cardB);
@@ -246,10 +233,17 @@
 
       let html = `<p>${userInfo.school} ${userInfo.id} ${userInfo.name} 님이 선택한 결과입니다</p>`;
       for (let i = 0; i < roundResults.length; i++) {
+        const final = roundResults[i].final.major;
+        const finals = roundResults[i].semis.filter(x => x.major !== final).map(x => x.major);
+        const semis = roundResults[i].quarters.filter(x => !roundResults[i].semis.includes(x)).map(x => x.major);
+        const quarters = roundData.filter(x => ![final, ...finals, ...semis].includes(x.major)).slice(0, 4).map(x => x.major);
+
         html += `<h3>Round ${i + 1}</h3>`;
-        html += `<table><tr><td>최종선택</td><td>${roundResults[i].final.major}</td></tr>`;
-        html += `<tr><td>결승진출</td><td>${roundResults[i].semis.filter(x => x.major !== roundResults[i].final.major).map(x => x.major).join(', ')}</td></tr>`;
-        html += `<tr><td>4강진출</td><td>${roundResults[i].quarters.filter(x => !roundResults[i].semis.includes(x)).map(x => x.major).join(', ')}</td></tr>`;
+        html += `<table>`;
+        html += `<tr><td>최종선택</td><td>${final}</td></tr>`;
+        html += `<tr><td>결승진출</td><td>${finals.join(', ')}</td></tr>`;
+        html += `<tr><td>4강진출</td><td>${semis.join(', ')}</td></tr>`;
+        html += `<tr><td>8강진출</td><td>${quarters.join(', ')}</td></tr>`;
         html += `</table>`;
       }
       result.innerHTML = html;
