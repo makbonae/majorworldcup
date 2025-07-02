@@ -104,13 +104,12 @@
   </div>
 
 <script>
-const supabaseClient = supabase.createClient(
-  'https://vgnnzehkzbrsatdyoqzf.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA'
-);
+const SUPABASE_URL = 'https://vgnnzehkzbrsatdyoqzf.supabase.co';
+const SUPABASE_KEY = 'ey...';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let userInfo = { school: '', studentId: '', studentName: '' };
-let roundResults = [], roundNumber = 1, currentTable = '', latestData = [];
+let roundResults = [], roundNumber = 1, currentTable = '', currentRoundData = [];
 
 function showInstructions() {
   userInfo.school = document.getElementById('school').value.trim();
@@ -130,57 +129,51 @@ async function startGame(tableName) {
     alert("데이터 불러오기 실패"); return;
   }
   const majors = shuffleArray(data);
-  const startData = (tableName === 'inmun') ? prepareInmunData(majors) : majors.slice(0, 64);
-  latestData = startData;
-  startTournament(startData);
+  if (tableName === 'inmun') {
+    const bye = majors.slice(0, 8);
+    const play = majors.slice(8, 56);
+    currentRoundData = play;
+    roundResults = [];
+    roundNumber = 1;
+    startTournament(bye);
+  } else {
+    currentRoundData = majors.slice(0, 64);
+    roundResults = [];
+    roundNumber = 1;
+    startTournament([]);
+  }
 }
 
-function prepareInmunData(data) {
-  const shuffled = shuffleArray(data);
-  const bye = shuffled.slice(0, 8);
-  const play = shuffled.slice(8, 56);
-  const pairs = [];
-  for (let i = 0; i < play.length; i += 2) pairs.push([play[i], play[i + 1]]);
-  return { bye, pairs };
-}
-
-function startTournament(data) {
+function startTournament(bye) {
   document.getElementById("instruction").classList.add("hidden");
   document.getElementById("roundNotice").classList.remove("hidden");
-  document.getElementById("roundTitle").innerText = `${getRoundTitle()} 로딩 중...`;
+  document.getElementById("roundTitle").innerText = `${currentRoundData.length + bye.length}강 로딩 중...`;
   setTimeout(() => {
     document.getElementById("roundNotice").classList.add("hidden");
     document.getElementById("tournament").classList.remove("hidden");
-    showTournament(data);
+    showTournament(bye);
   }, 2000);
 }
 
-function showTournament(data) {
+function showTournament(bye) {
   const container = document.getElementById("tournament");
   container.innerHTML = "";
-  let pairs = [];
-
-  if (Array.isArray(data)) {
-    for (let i = 0; i < data.length; i += 2) pairs.push([data[i], data[i + 1]]);
-  } else {
-    pairs = data.pairs;
-    data = data.bye;
+  const pairs = [];
+  for (let i = 0; i < currentRoundData.length; i += 2) {
+    pairs.push([currentRoundData[i], currentRoundData[i + 1]]);
   }
-
   let selected = [];
+
   function showPair(index) {
     if (index >= pairs.length) {
-      const nextData = [...selected];
-      if (Array.isArray(data)) nextData.push(...data);
+      currentRoundData = [...selected, ...bye];
+      if (currentRoundData.length === 1) return showResult();
       roundResults.push(selected);
-      if (nextData.length === 1) return showResult();
       roundNumber++;
       document.getElementById("tournament").classList.add("hidden");
-      latestData = nextData;
-      startTournament(nextData);
+      startTournament([]);
       return;
     }
-
     const [a, b] = pairs[index];
     container.innerHTML = '';
     const row = document.createElement('div');
@@ -197,23 +190,18 @@ function showTournament(data) {
   showPair(0);
 }
 
-function getRoundTitle() {
-  const titles = { 1: "64강", 2: "32강", 3: "16강", 4: "8강", 5: "4강", 6: "결승" };
-  return titles[roundNumber] || `${Math.pow(2, 7 - roundNumber)}강`;
-}
-
 function showResult() {
   document.getElementById("tournament").classList.add("hidden");
   document.getElementById("resultArea").classList.remove("hidden");
   const tree = document.getElementById("summaryTree");
-  tree.innerHTML = "<h2>" + userInfo.school + " " + userInfo.studentId + " " + userInfo.studentName + " 님이 선택한 결과입니다</h2>";
-
+  tree.innerHTML = `<h2>${userInfo.school} ${userInfo.studentId} ${userInfo.studentName} 님의 선택 결과</h2>`;
+  roundResults.push([currentRoundData[0]]);
   for (let i = 0; i < roundResults.length; i++) {
     const data = roundResults[i];
+    const final = data[0]?.major || "";
     const finals = data.slice(0, 2).map(d => d.major);
     const semis = data.slice(0, 4).map(d => d.major);
     const quarters = data.slice(0, 8).map(d => d.major);
-    const final = data[0].major;
     tree.innerHTML += `
       <table class='summary-table'>
         <tr><th colspan='2'>Round ${i + 1} 결과</th></tr>
@@ -223,7 +211,6 @@ function showResult() {
         <tr><th>8강 진출자</th><td>${quarters.join(" / ")}</td></tr>
       </table>`;
   }
-
   if (roundResults.length >= 3) document.getElementById("pdfBtn").classList.remove("hidden");
   else document.getElementById("nextRoundBtn").classList.remove("hidden");
 }
@@ -233,9 +220,7 @@ function nextRound() {
   document.getElementById("resultArea").classList.add("hidden");
   document.getElementById("pdfBtn").classList.add("hidden");
   document.getElementById("nextRoundBtn").classList.add("hidden");
-  const lastRound = roundResults[roundResults.length - 1];
-  const shuffled = shuffleArray(lastRound);
-  startTournament(shuffled);
+  startGame(currentTable);
 }
 
 function shuffleArray(arr) {
