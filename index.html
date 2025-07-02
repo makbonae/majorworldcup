@@ -109,7 +109,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let userInfo = { school: '', studentId: '', studentName: '' };
-let roundResults = [], roundNumber = 1, currentTable = '';
+let results = [], roundNumber = 1, currentTable = '';
 
 function showInstructions() {
   userInfo.school = document.getElementById('school').value.trim();
@@ -144,7 +144,7 @@ function prepareInmunData(data) {
 function startTournament(data) {
   document.getElementById("instruction").classList.add("hidden");
   document.getElementById("roundNotice").classList.remove("hidden");
-  document.getElementById("roundTitle").innerText = "64강 로딩 중...";
+  document.getElementById("roundTitle").innerText = `${64 / Math.pow(2, roundNumber - 1)}강 로딩 중...`;
   setTimeout(() => {
     document.getElementById("roundNotice").classList.add("hidden");
     document.getElementById("tournament").classList.remove("hidden");
@@ -169,7 +169,12 @@ function showTournament(data) {
     if (index >= pairs.length) {
       const nextData = [...selected];
       if (Array.isArray(data)) nextData.push(...data);
-      roundResults.push(selected);
+      results.push({
+        final: selected[0],
+        finals: selected.slice(0, 2),
+        semis: selected.slice(0, 4),
+        quarters: selected.slice(0, 8)
+      });
       if (nextData.length === 1) return showResult();
       roundNumber++;
       document.getElementById("tournament").classList.add("hidden");
@@ -199,12 +204,12 @@ function showResult() {
   const tree = document.getElementById("summaryTree");
   tree.innerHTML = "<h2>" + userInfo.school + " " + userInfo.studentId + " " + userInfo.studentName + " 님이 선택한 결과입니다</h2>";
 
-  for (let i = 0; i < roundResults.length; i++) {
-    const data = roundResults[i];
-    const finals = data.slice(0, 2).map(d => d.major);
-    const semis = data.slice(0, 4).map(d => d.major);
-    const quarters = data.slice(0, 8).map(d => d.major);
-    const final = data[0].major;
+  for (let i = 0; i < results.length; i++) {
+    const round = results[i];
+    const finals = round.finals.map(d => d.major);
+    const semis = round.semis.map(d => d.major);
+    const quarters = round.quarters.map(d => d.major);
+    const final = round.final.major;
     tree.innerHTML += `
       <table class='summary-table'>
         <tr><th colspan='2'>Round ${i + 1} 결과</th></tr>
@@ -215,7 +220,7 @@ function showResult() {
       </table>`;
   }
 
-  if (roundResults.length >= 3) document.getElementById("pdfBtn").classList.remove("hidden");
+  if (results.length >= 3) document.getElementById("pdfBtn").classList.remove("hidden");
   else document.getElementById("nextRoundBtn").classList.remove("hidden");
 }
 
