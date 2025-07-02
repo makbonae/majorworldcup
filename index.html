@@ -17,7 +17,7 @@
     td { border: 1px solid #ccc; padding: 10px; }
     #loading-text { font-size: 32px; font-weight: bold; color: hotpink; }
     .pair { display: flex; justify-content: center; gap: 50px; margin: 40px 0; }
-    .card { width: 300px; height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 2px solid #ccc; border-radius: 10px; padding: 10px; box-sizing: border-box; }
+    .card { width: 40vw; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 2px solid #ccc; border-radius: 10px; padding: 10px; box-sizing: border-box; }
   </style>
 </head>
 <body>
@@ -169,7 +169,7 @@
       document.getElementById('greeting').innerText = greeting;
 
       const used = new Set();
-      const resultRows = ['최종 선택', '결승', '4강', '8강'];
+      const resultRows = ['8강'];
       const container = document.getElementById('results-tables');
       container.innerHTML = '';
 
