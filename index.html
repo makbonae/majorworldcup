@@ -61,7 +61,7 @@
 
     const { createClient } = supabase;
     const supabaseClient = createClient(
-      'https://vgmnzehkzbrsatlyozf.supabase.co',
+      'https://vgnnzehkzbrsatdyoqzf.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA'
     );
 
@@ -76,9 +76,15 @@
     async function startTournament(table) {
       roundResults = [];
       document.getElementById('info-screen').classList.add('hidden');
-      showRoundLoading('64강');
+      await showRoundLoading('64강');
 
-      const { data } = await supabaseClient.from(table).select('*');
+      const { data, error } = await supabaseClient.from(table).select('*');
+
+      if (error || !Array.isArray(data)) {
+        alert('데이터 불러오기 실패: ' + (error?.message || '형식 오류'));
+        return;
+      }
+
       fullData = [...data];
       shuffle(fullData);
 
