@@ -8,196 +8,190 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body { font-size: 24px; font-family: sans-serif; text-align: center; margin: 0; background: #f9f9f9; }
-    .input-container, .instruction, .tournament, .result-area, .round-loading, .summary-area { display: none; margin-top: 50px; }
+    .input-container, .instruction, .category-select, .tournament, .result-area, .round-loading { display: none; margin-top: 50px; }
     .category-select { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
-    .card-container { display: flex; justify-content: center; align-items: stretch; gap: 5%; margin: 40px 10%; }
-    .card { flex: 1; min-width: 30%; padding: 20px; border: 3px solid #ccc; border-radius: 15px; background: white; cursor: pointer; display: flex; flex-direction: column; justify-content: center; }
     .bold-major { font-weight: bold; font-size: 48px; color: black; }
-    .friend { font-size: 18px; color: pink; margin-top: 10px; }
-    .spinner { border: 12px solid #f3f3f3; border-top: 12px solid pink; border-radius: 50%; width: 80px; height: 80px; animation: spin 1s linear infinite; margin: 0 auto; }
+    .friend { color: pink; font-size: 18px; }
+    .card-container { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
+    .card { flex: 0 0 40%; border: 2px solid #ddd; border-radius: 20px; padding: 20px; cursor: pointer; background: white; }
+    .loading { font-size: 36px; color: pink; margin-top: 200px; }
+    .spinner { border: 8px solid #f3f3f3; border-top: 8px solid pink; border-radius: 50%; width: 80px; height: 80px; animation: spin 1s linear infinite; margin: auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    table { border-collapse: collapse; margin: 30px auto; width: 80%; font-size: 20px; }
-    th, td { border: 1px solid #999; padding: 10px; }
+    .summary-table { width: 80%; margin: 30px auto; border-collapse: collapse; font-size: 20px; }
+    .summary-table th, .summary-table td { border: 1px solid #999; padding: 10px; }
   </style>
 </head>
 <body>
-  <div class="input-container">
-    <input id="school" placeholder="학교명">
-    <input id="studentId" placeholder="학번">
-    <input id="studentName" placeholder="이름">
-    <button onclick="showInstructions()">다음</button>
-  </div>
 
-  <div class="instruction">
-    <p style="text-align: left; padding-left: 1.5em; white-space: pre-line;">
-① 이 프로그램은 대학 전공학과에 대한 자신의 관심 순위를 알아보기 위해 제작되었습니다.
-② [인문+공통+체육], [자연+공통] 2개 카테고리 중에 하나를 선택하여 진행합니다.
-③ 해당 계열의 전공학과가 쌍을 이루어 나타나면, 보다 관심이 있는 학과를 선택하기 바랍니다.
-④ 64강부터 시작하며, [인문+공통+체육]은 무작위로 선택된 8개의 학과가 부전승으로 32강에 진출합니다.
-⑤ 총 3번까지 결과를 저장하고 라운드를 진행할 수 있으며, 3라운드를 마치면 PDF 파일로 결과를 저장할 수 있습니다.
-⑥ 준비가 되었다면 아래 계열을 선택하고 전공학과 이상형 월드컵을 시작해 주세요.
-    </p>
-    <div class="category-select">
-      <button onclick="startTournament('inmun')">인문+공통+체육</button>
-      <button onclick="startTournament('jayeon')">자연+공통</button>
-    </div>
-  </div>
+<div class="input-container" id="inputForm">
+  <input id="school" placeholder="학교명">
+  <input id="studentId" placeholder="학번">
+  <input id="studentName" placeholder="이름">
+  <button onclick="startInput()">다음</button>
+</div>
 
-  <div class="round-loading">
-    <div class="spinner"></div>
-    <div id="roundLabel" style="font-size: 32px; color: pink; margin-top: 20px;"></div>
+<div class="instruction" id="instruction">
+  <p style="text-align: left; padding-left: 1.5em; line-height: 1.6">
+    ① 이 프로그램은 대학 전공학과에 대한 자신의 관심 순위를 알아보기 위해 제작되었습니다.<br>
+    ② [인문+공통+체육], [자연+공통] 2개 카테고리 중 하나를 선택하여 진행합니다.<br>
+    ③ 해당 계열의 전공학과가 쌍을 이루어 나타나면, 보다 관심이 있는 학과를 선택하기 바랍니다.<br>
+    ④ 64강부터 시작하며, [인문+공통+체육]은 무작위로 선택된 8개의 학과가 부전승으로 32강에 진출합니다.<br>
+    ⑤ 총 3번까지 결과를 저장하고 라운드를 진행할 수 있으며, 3라운드를 마치면 PDF 파일로 결과를 저장할 수 있습니다.<br>
+    ⑥ 준비가 되었다면 아래 계열을 선택하고 전공학과 이상형 월드컵을 시작해 주세요.
+  </p>
+  <div class="category-select">
+    <button onclick="loadMajorData('inmun')">인문+공통+체육</button>
+    <button onclick="loadMajorData('jayeon')">자연+공통</button>
   </div>
+</div>
 
-  <div class="tournament"></div>
+<div class="round-loading" id="loading">
+  <div class="spinner"></div>
+  <div class="loading" id="loadingText"></div>
+</div>
 
-  <div class="result-area">
-    <div id="finalLabel" style="font-size: 32px; margin-bottom: 20px;"></div>
-    <div class="summary-area">
-      <div id="summaryTable"></div>
-      <button onclick="startTournament(currentCategory)">결과 저장하고 한번 더!</button>
-      <button id="pdfBtn" onclick="downloadPDF()" style="display:none;">PDF 저장</button>
-    </div>
-  </div>
+<div class="tournament" id="tournament"></div>
+<div class="result-area" id="resultArea">
+  <h2 id="resultHeader"></h2>
+  <div id="summaryTree"></div>
+  <button onclick="nextRound()">결과 저장하고 한번 더!</button>
+  <button onclick="downloadPDF()" id="pdfBtn" style="display:none;">PDF 저장</button>
+</div>
 
 <script>
 const SUPABASE_URL = 'https://vgnnzehkzbrsatdyoqzf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA';
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let currentCategory = "", roundNum = 0, allRounds = [], results = [], user = {};
+let userInfo = {}, fullData = [], roundNum = 1, results = [];
 
-function showInstructions() {
-  user = {
-    school: document.getElementById("school").value.trim(),
-    id: document.getElementById("studentId").value.trim(),
-    name: document.getElementById("studentName").value.trim()
+function startInput() {
+  userInfo = {
+    school: document.getElementById('school').value.trim(),
+    id: document.getElementById('studentId').value.trim(),
+    name: document.getElementById('studentName').value.trim()
   };
-  document.querySelector(".input-container").style.display = "none";
-  document.querySelector(".instruction").style.display = "block";
+  document.getElementById('inputForm').style.display = 'none';
+  document.getElementById('instruction').style.display = 'block';
 }
 
-async function startTournament(category) {
-  currentCategory = category;
-  document.querySelector(".instruction").style.display = "none";
-  document.querySelector(".round-loading").style.display = "block";
-  document.getElementById("roundLabel").innerText = "64강 로딩중...";
+async function loadMajorData(category) {
+  document.getElementById('instruction').style.display = 'none';
+  const { data, error } = await client.from(category).select('*');
+  if (error || !data) return alert('데이터 불러오기 실패');
 
-  let { data, error } = await client.from(category).select();
-  if (!data || error) return alert("데이터 불러오기 실패");
-
-  let items = [...data];
+  fullData = [...data];
   if (category === 'inmun') {
-    items = shuffle(items);
-    const auto32 = items.slice(0, 8);
-    const play56 = items.slice(8, 56);
-    const pairs = makePairs(play56);
-    roundNum = 64;
-    allRounds = [pairs, [], [], [], [], []];
-    allRounds[1] = [...auto32];
-    playRound();
+    fullData = shuffle(fullData);
+    const advance = fullData.slice(0, 8);
+    const round48 = fullData.slice(8, 56);
+    const pairs = chunk(round48, 2);
+    runTournament(pairs, advance);
   } else {
-    items = shuffle(items).slice(0, 64);
-    const pairs = makePairs(items);
-    roundNum = 64;
-    allRounds = [pairs, [], [], [], [], []];
-    playRound();
+    fullData = shuffle(data).slice(0, 64);
+    const pairs = chunk(fullData, 2);
+    runTournament(pairs);
   }
 }
 
-function playRound() {
-  document.querySelector(".round-loading").style.display = "block";
-  document.querySelector(".tournament").style.display = "none";
-  document.getElementById("roundLabel").innerText = `${roundNum}강 로딩중...`;
-  setTimeout(() => {
-    document.querySelector(".round-loading").style.display = "none";
-    document.querySelector(".tournament").innerHTML = "";
-    document.querySelector(".tournament").style.display = "block";
-    const pairs = allRounds[roundNum === 64 ? 0 : roundNum === 32 ? 1 : roundNum === 16 ? 2 : roundNum === 8 ? 3 : roundNum === 4 ? 4 : 5];
-    showPair(pairs, 0, []);
-  }, 2000);
-}
+function runTournament(pairs, advance = []) {
+  document.getElementById('tournament').style.display = 'block';
+  document.getElementById('loading').style.display = 'none';
 
-function showPair(pairs, index, selected) {
-  if (index >= pairs.length) {
-    if (roundNum === 64 && currentCategory === 'inmun') {
-      allRounds[2] = [...allRounds[1], ...selected];
-    } else {
-      const nextRound = makePairs(selected);
-      if (roundNum === 64) allRounds[2] = nextRound;
-      else if (roundNum === 32) allRounds[3] = nextRound;
-      else if (roundNum === 16) allRounds[4] = nextRound;
-      else if (roundNum === 8) allRounds[5] = nextRound;
-      else if (roundNum === 4) allRounds[6] = nextRound;
+  let selected = [], roundSize = pairs.length * 2;
+  document.getElementById('tournament').innerHTML = `<h2>${roundSize}강</h2><div class="card-container" id="pairContainer"></div>`;
+  const container = document.getElementById('pairContainer');
+
+  let index = 0;
+  function showPair() {
+    if (index >= pairs.length) {
+      let next = [...selected];
+      if (advance.length > 0) next = [...next, ...advance];
+      if (next.length === 1) {
+        showResults(next[0]);
+        return;
+      }
+      const nextPairs = chunk(next, 2);
+      runTournament(nextPairs);
+      return;
     }
-    roundNum = roundNum / 2;
-    if (roundNum < 2) return showResult(selected[0]);
-    playRound();
-    return;
+
+    container.innerHTML = '';
+    const pair = pairs[index];
+    pair.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `<div class='bold-major'>${item.major}</div><div class='friend'>${item.friends}</div>`;
+      card.onclick = () => {
+        selected.push(item);
+        index++;
+        setTimeout(showPair, 100);
+      };
+      container.appendChild(card);
+    });
   }
 
-  const container = document.querySelector(".tournament");
-  container.innerHTML = "";
-  const wrap = document.createElement("div");
-  wrap.className = "card-container";
+  showPair();
+}
 
-  pairs[index].forEach(item => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `<div class='bold-major'>${item.major}</div><div class='friend'>${item.friends}</div>`;
-    card.onclick = () => showPair(pairs, index + 1, [...selected, item]);
-    wrap.appendChild(card);
+function showResults(winner) {
+  document.getElementById('tournament').style.display = 'none';
+  document.getElementById('resultArea').style.display = 'block';
+  document.getElementById('resultHeader').innerText = `${userInfo.school} ${userInfo.id} ${userInfo.name} 님이 선택한 결과입니다`;
+
+  const summary = document.getElementById('summaryTree');
+  results.push(winner);
+  summary.innerHTML = '';
+  results.forEach((win, i) => {
+    summary.innerHTML += `
+    <table class='summary-table'>
+      <tr><th colspan='2'>Round ${i + 1} 결과</th></tr>
+      <tr><th>최종 우승</th><td>${win.major}</td></tr>
+      <tr><th>결승 진출자</th><td>${win.major_type || '-'}</td></tr>
+      <tr><th>4강 진출자</th><td>${win['major-ref'] || '-'}</td></tr>
+      <tr><th>8강 진출자</th><td>${win.desc || '-'}</td></tr>
+    </table>`;
   });
 
-  container.appendChild(wrap);
+  document.getElementById('pdfBtn').style.display = results.length >= 3 ? 'inline-block' : 'none';
 }
 
-function showResult(finalItem) {
-  document.querySelector(".tournament").style.display = "none";
-  document.querySelector(".result-area").style.display = "block";
-  document.getElementById("finalLabel").innerText = `${user.school} ${user.id} ${user.name} 님이 선택한 결과입니다`;
-  const summary = document.getElementById("summaryTable");
-  summary.innerHTML = "";
-
-  const finals = allRounds[5].map(i => i.major).filter(m => m !== finalItem.major);
-  const semis = allRounds[4].map(i => i.major).filter(m => ![...finals, finalItem.major].includes(m));
-  const quarters = allRounds[3].map(i => i.major).filter(m => ![...finals, ...semis, finalItem.major].includes(m));
-
-  summary.innerHTML = `
-    <table>
-      <tr><th>최종 선택</th><td>${finalItem.major}</td></tr>
-      <tr><th>결승 진출</th><td>${finals.join(" / ")}</td></tr>
-      <tr><th>4강 진출</th><td>${semis.join(" / ")}</td></tr>
-      <tr><th>8강 진출</th><td>${quarters.join(" / ")}</td></tr>
-    </table>`;
-  if (results.length === 2) document.getElementById("pdfBtn").style.display = "inline-block";
-  results.push(finalItem);
+function nextRound() {
+  roundNum++;
+  document.getElementById('resultArea').style.display = 'none';
+  document.getElementById('summaryTree').innerHTML = '';
+  document.getElementById('pdfBtn').style.display = 'none';
+  document.getElementById('instruction').style.display = 'block';
 }
 
 function downloadPDF() {
   const { jsPDF } = window.jspdf;
+  const fileName = `${userInfo.id}${userInfo.name}_전공월드컵결과.pdf`;
+
   html2canvas(document.body).then(canvas => {
-    const img = canvas.toDataURL("image/jpeg", 1.0);
-    const pdf = new jsPDF("p", "mm", "a4");
-    const width = pdf.internal.pageSize.getWidth();
-    const height = canvas.height * width / canvas.width;
-    pdf.addImage(img, 'JPEG', 0, 0, width, height);
-    pdf.save(`${user.id}_${user.name}_결과.pdf`);
+    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+    const pdf = new jsPDF();
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(fileName);
   });
 }
 
-function makePairs(arr) {
-  const pairs = [];
-  for (let i = 0; i < arr.length; i += 2) pairs.push([arr[i], arr[i + 1]]);
-  return pairs;
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
 }
 
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
+function chunk(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+  return chunks;
 }
+
+window.onload = () => {
+  document.getElementById('inputForm').style.display = 'block';
+};
 </script>
 </body>
 </html>
