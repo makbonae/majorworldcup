@@ -9,7 +9,7 @@
   <style>
     body { font-size: 24px; font-family: sans-serif; text-align: center; margin: 0; background: #f9f9f9; }
     .input-container, .instruction, .tournament, .result-area, .round-loading { display: none; margin-top: 50px; }
-    .category-select {display: flex; justify-content: center; gap: 20px; margin-top: 20px;}
+    .category-select { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
     .bold-major { font-weight: bold; font-size: 48px; color: black; }
     .friend-text { font-size: 24px; color: blue; margin-top: 10px; }
     .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #555; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: auto; }
@@ -22,7 +22,7 @@
 </head>
 <body>
   <div class="input-container" id="inputForm">
-    <input id="school" placeholder="학교명"> 
+    <input id="school" placeholder="학교명">
     <input id="student_id" placeholder="학번">
     <input id="student_name" placeholder="이름">
     <button onclick="showInstruction()">다음</button>
@@ -53,7 +53,7 @@
 
   <script>
     const SUPABASE_URL = 'https://vgnnzehkzbrsatdyoqzf.supabase.co';
-    const SUPABASE_KEY = 'your_supabase_key';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbm56ZWhremJyc2F0ZHlvcXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNzUyNTksImV4cCI6MjA2Njk1MTI1OX0.ANWPKzugvztZLkYm5P9og9ENF-SG4QcTi9s1RBOO1DA';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let roundData = [];
@@ -82,7 +82,7 @@
       showLoading('64강');
 
       let { data, error } = await supabase.from(table).select('*');
-      if (error) return alert('데이터 불러오기 실패');
+      if (error || !data || data.length < 64) return alert('데이터 불러오기 실패 또는 데이터 부족');
 
       data = shuffleArray(data);
 
@@ -98,7 +98,6 @@
           if (index >= round64Set.length) {
             roundData = [...round64Winners, ...autoPass];
             showLoading('32강');
-            document.getElementById('tournament').style.display = 'none';
             setTimeout(() => {
               hideLoading();
               document.getElementById('tournament').style.display = 'block';
@@ -117,15 +116,8 @@
           const cardA = createCard(card1);
           const cardB = createCard(card2);
 
-          cardA.onclick = () => {
-            round64Winners.push(card1);
-            play64Round();
-          };
-
-          cardB.onclick = () => {
-            round64Winners.push(card2);
-            play64Round();
-          };
+          cardA.onclick = () => { round64Winners.push(card1); play64Round(); };
+          cardB.onclick = () => { round64Winners.push(card2); play64Round(); };
 
           container.appendChild(cardA);
           container.appendChild(cardB);
@@ -144,16 +136,54 @@
       }
     }
 
+    function playRound(pairs) {
+      const container = document.getElementById('tournament');
+      container.innerHTML = '';
+      if (pairs.length === 1) {
+        saveRoundResult(pairs[0]);
+        showSummary();
+        return;
+      }
+      const nextRound = [];
+      let currentPairIndex = 0;
+
+      function showPair() {
+        if (currentPairIndex >= pairs.length) {
+          const nextLabel = getNextRoundLabel(nextRound.length);
+          showLoading(nextLabel);
+          setTimeout(() => {
+            hideLoading();
+            playRound(nextRound);
+          }, 2000);
+          return;
+        }
+        const card1 = pairs[currentPairIndex];
+        const card2 = pairs[currentPairIndex + 1];
+        currentPairIndex += 2;
+        container.innerHTML = '';
+        const cardA = createCard(card1);
+        const cardB = createCard(card2);
+        cardA.onclick = () => { nextRound.push(card1); showPair(); };
+        cardB.onclick = () => { nextRound.push(card2); showPair(); };
+        container.appendChild(cardA);
+        container.appendChild(cardB);
+      }
+
+      showPair();
+    }
+
+    function getNextRoundLabel(count) {
+      const map = {32:'16강', 16:'8강', 8:'4강', 4:'2강', 2:'1강'};
+      return map[count] || `${count}강`;
+    }
+
     function showLoading(roundName) {
       document.getElementById('roundLoading').style.display = 'block';
       document.getElementById('tournament').style.display = 'none';
       let displayName = roundName;
       if (roundName === '2강') displayName = '결승';
-      if (roundName === '1강') {
-        displayName = `${userInfo.name} 님의 선택 결과 입니다.`;
-      } else {
-        displayName = `${displayName} 로딩중...`;
-      }
+      if (roundName === '1강') displayName = `${userInfo.name} 님의 선택 결과 입니다.`;
+      else displayName = `${displayName} 로딩중...`;
       document.getElementById('roundText').innerText = displayName;
     }
 
@@ -174,55 +204,6 @@
       div.className = 'card';
       div.innerHTML = `<div class='bold-major'>${item.major}</div><div class='friend-text'>${item.friends}</div>`;
       return div;
-    }
-
-    function playRound(pairs) {
-      const container = document.getElementById('tournament');
-      container.innerHTML = '';
-
-      if (pairs.length === 1) {
-        saveRoundResult(pairs[0]);
-        showSummary();
-        return;
-      }
-
-      const nextRound = [];
-      let index = 0;
-
-      function showNext() {
-        if (index >= pairs.length) {
-          const roundName = `${nextRound.length}강`;
-          showLoading(roundName);
-          setTimeout(() => {
-            hideLoading();
-            playRound(nextRound);
-          }, 2000);
-          return;
-        }
-
-        const card1 = pairs[index];
-        const card2 = pairs[index + 1];
-        index += 2;
-
-        container.innerHTML = '';
-
-        const cardA = createCard(card1);
-        const cardB = createCard(card2);
-
-        cardA.onclick = () => {
-          nextRound.push(card1);
-          showNext();
-        };
-        cardB.onclick = () => {
-          nextRound.push(card2);
-          showNext();
-        };
-
-        container.appendChild(cardA);
-        container.appendChild(cardB);
-      }
-
-      showNext();
     }
 
     function saveRoundResult(winner) {
