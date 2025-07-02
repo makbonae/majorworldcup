@@ -109,7 +109,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let userInfo = { school: '', studentId: '', studentName: '' };
-let roundResults = [], roundNumber = 1, currentTable = '', currentRoundData = [];
+let results = [], currentTable = '', roundData = [], roundStages = {};
 
 function showInstructions() {
   userInfo.school = document.getElementById('school').value.trim();
@@ -131,47 +131,43 @@ async function startGame(tableName) {
   const majors = shuffleArray(data);
   if (tableName === 'inmun') {
     const bye = majors.slice(0, 8);
-    const play = majors.slice(8, 56);
-    currentRoundData = play;
-    roundResults = [];
-    roundNumber = 1;
-    startTournament(bye);
+    roundData = majors.slice(8, 56);
+    roundStages = { bye };
   } else {
-    currentRoundData = majors.slice(0, 64);
-    roundResults = [];
-    roundNumber = 1;
-    startTournament([]);
+    roundData = majors.slice(0, 64);
+    roundStages = {};
   }
+  results = [];
+  document.getElementById("instruction").classList.add("hidden");
+  nextStage();
 }
 
-function startTournament(bye) {
-  document.getElementById("instruction").classList.add("hidden");
+function nextStage() {
+  const total = roundData.length + (roundStages.bye ? roundStages.bye.length : 0);
+  document.getElementById("roundTitle").innerText = `${total}강 로딩 중...`;
   document.getElementById("roundNotice").classList.remove("hidden");
-  document.getElementById("roundTitle").innerText = `${currentRoundData.length + bye.length}강 로딩 중...`;
   setTimeout(() => {
     document.getElementById("roundNotice").classList.add("hidden");
     document.getElementById("tournament").classList.remove("hidden");
-    showTournament(bye);
-  }, 2000);
+    runMatch(roundData, roundStages.bye || []);
+    roundStages.bye = [];
+  }, 1500);
 }
 
-function showTournament(bye) {
+function runMatch(data, bye) {
   const container = document.getElementById("tournament");
   container.innerHTML = "";
   const pairs = [];
-  for (let i = 0; i < currentRoundData.length; i += 2) {
-    pairs.push([currentRoundData[i], currentRoundData[i + 1]]);
-  }
+  for (let i = 0; i < data.length; i += 2) pairs.push([data[i], data[i + 1]]);
   let selected = [];
-
   function showPair(index) {
     if (index >= pairs.length) {
-      currentRoundData = [...selected, ...bye];
-      if (currentRoundData.length === 1) return showResult();
-      roundResults.push([...selected]);
-      roundNumber++;
-      document.getElementById("tournament").classList.add("hidden");
-      startTournament([]);
+      roundData = [...selected, ...bye];
+      if (roundData.length === 1) {
+        recordResult(roundData[0]);
+        return showResults();
+      }
+      nextStage();
       return;
     }
     const [a, b] = pairs[index];
@@ -190,41 +186,36 @@ function showTournament(bye) {
   showPair(0);
 }
 
-function showResult() {
+function recordResult(finalWord) {
+  const final = finalWord.major;
+  const finals = roundData.filter(item => item.major !== final).slice(0, 1);
+  const semis = roundData.filter(item => !finals.includes(item) && item.major !== final).slice(0, 2);
+  const quarters = roundData.filter(item => !finals.includes(item) && !semis.includes(item) && item.major !== final).slice(0, 4);
+  results.push({ final, finals, semis, quarters });
+}
+
+function showResults() {
   document.getElementById("tournament").classList.add("hidden");
   document.getElementById("resultArea").classList.remove("hidden");
   const tree = document.getElementById("summaryTree");
-
-  if (roundResults.length === 1) {
-    tree.innerHTML = `<h2>${userInfo.school} ${userInfo.studentId} ${userInfo.studentName} 님의 선택 결과</h2>`;
-  }
-
-  const last = roundResults[roundResults.length - 1];
-  const final = last[0];
-  const finals = last.slice(0, 2).filter(d => d.major !== final.major);
-  const semis = last.slice(0, 4).filter(d => !last.slice(0, 2).includes(d));
-  const quarters = last.slice(0, 8).filter(d => !last.slice(0, 4).includes(d));
-
-  tree.innerHTML += `
+  tree.innerHTML = `<h2>${userInfo.school} ${userInfo.studentId} ${userInfo.studentName} 님의 선택 결과</h2>`;
+  results.forEach((r, i) => {
+    tree.innerHTML += `
     <table class='summary-table'>
-      <tr><th colspan='2'>Round ${roundResults.length} 결과</th></tr>
-      <tr><th>최종 우승</th><td>${final.major}</td></tr>
-      <tr><th>결승 진출자</th><td>${finals.map(d => d.major).join(" / ")}</td></tr>
-      <tr><th>4강 진출자</th><td>${semis.map(d => d.major).join(" / ")}</td></tr>
-      <tr><th>8강 진출자</th><td>${quarters.map(d => d.major).join(" / ")}</td></tr>
+      <tr><th colspan='2'>Round ${i + 1} 결과</th></tr>
+      <tr><th>최종 우승</th><td>${r.final}</td></tr>
+      <tr><th>결승 진출자</th><td>${r.finals.map(f => f.major || f).join(" / ")}</td></tr>
+      <tr><th>4강 진출자</th><td>${r.semis.map(s => s.major || s).join(" / ")}</td></tr>
+      <tr><th>8강 진출자</th><td>${r.quarters.map(q => q.major || q).join(" / ")}</td></tr>
     </table>`;
-
-  document.getElementById("nextRoundBtn").classList.remove("hidden");
-  document.getElementById("pdfBtn").classList.add("hidden");
-
-  if (roundResults.length === 3) {
-    document.getElementById("nextRoundBtn").classList.add("hidden");
-    document.getElementById("pdfBtn").classList.remove("hidden");
-  }
+  });
+  document.getElementById("pdfBtn").classList.toggle("hidden", results.length < 3);
+  document.getElementById("nextRoundBtn").classList.toggle("hidden", results.length >= 3);
 }
 
 function nextRound() {
-  roundNumber = 1;
+  roundData = [];
+  roundStages = {};
   document.getElementById("resultArea").classList.add("hidden");
   document.getElementById("pdfBtn").classList.add("hidden");
   document.getElementById("nextRoundBtn").classList.add("hidden");
