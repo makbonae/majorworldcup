@@ -85,24 +85,62 @@
       if (error) return alert('데이터 불러오기 실패');
 
       data = shuffleArray(data);
+
       if (table === 'inmun') {
-        let autoPass = data.slice(0, 8);
-        let others = data.slice(8);
-        let round64Set = others.slice(0, 48);          // 48개로 24쌍 → 64강 진행
-        let winners64 = [];                            // 64강 승자 목록
+        let autoPass = data.slice(0, 8);              // 부전승 8명
+        let others = data.slice(8);                  // 나머지 학과들
+        let round64Set = others.slice(0, 48);        // 48명으로 64강 진행 (24쌍)
 
-        // 64강 라운드 실행 전 저장
-        roundData = buildTournament(round64Set);
-        roundData.push(...autoPass);                   // 부전승 8개 포함하여 32강으로 진출
-      } else {
-        roundData = buildTournament(data.slice(0, 64));
-      }
+        let round64Winners = [];
+        let index = 0;
 
-      setTimeout(() => {
+        function play64Round() {
+          if (index >= round64Set.length) {
+            roundData = [...round64Winners, ...autoPass]; // 64강 승자 + 부전승 → 32강
+            showLoading('32강');
+            setTimeout(() => {
+              hideLoading();
+              document.getElementById('tournament').style.display = 'block';
+              playRound(roundData);
+            }, 2000);
+            return;
+          }
+
+          const card1 = round64Set[index];
+          const card2 = round64Set[index + 1];
+          index += 2;
+
+          const container = document.getElementById('tournament');
+          container.innerHTML = '';
+
+          const cardA = createCard(card1);
+          const cardB = createCard(card2);
+
+          cardA.onclick = () => {
+            round64Winners.push(card1);
+            play64Round();
+          };
+
+          cardB.onclick = () => {
+            round64Winners.push(card2);
+            play64Round();
+          };
+
+          container.appendChild(cardA);
+          container.appendChild(cardB);
+        }
+
         hideLoading();
         document.getElementById('tournament').style.display = 'block';
-        playRound(roundData);
-      }, 2000);
+        play64Round();
+      } else {
+        roundData = buildTournament(data.slice(0, 64));
+        setTimeout(() => {
+          hideLoading();
+          document.getElementById('tournament').style.display = 'block';
+          playRound(roundData);
+        }, 2000);
+      }
     }
 
     function showLoading(roundName) {
