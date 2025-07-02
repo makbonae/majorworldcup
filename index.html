@@ -14,10 +14,11 @@
     .instructions { margin: 50px 1.5em; text-align: left; white-space: pre-line; }
     button { font-size: 24px; margin: 10px; padding: 10px 20px; }
     table { margin: 10px auto; border-collapse: collapse; }
-    td { border: 1px solid #ccc; padding: 10px; }
+    td, th { border: 1px solid #ccc; padding: 10px; }
     #loading-text { font-size: 32px; font-weight: bold; color: hotpink; }
     .pair { display: flex; justify-content: center; gap: 50px; margin: 40px 0; }
     .card { width: 40vw; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 2px solid #ccc; border-radius: 10px; padding: 10px; box-sizing: border-box; }
+    .summary-table { margin-bottom: 30px; }
   </style>
 </head>
 <body>
@@ -110,9 +111,10 @@
         const matches = [];
         for (let j = 0; j < current.length; j += 2) matches.push([current[j], current[j + 1]]);
         current = await doPairSelection(matches);
-        saveRoundResult(labels[i], current);
+        roundResults.push({ roundName: labels[i], items: [...current] });
       }
-      saveRoundResult('최종 선택', current);
+
+      roundResults.push({ roundName: '최종 선택', items: [...current] });
       showResults();
     }
 
@@ -126,10 +128,6 @@
           res();
         }, 2000);
       });
-    }
-
-    function saveRoundResult(label, items) {
-      roundResults.push({ roundName: label, items: [...items] });
     }
 
     function doPairSelection(pairs) {
@@ -168,28 +166,37 @@
       const greeting = `${userInfo.school} ${userInfo.studentId} ${userInfo.name} 님이 선택한 결과입니다`;
       document.getElementById('greeting').innerText = greeting;
 
-      const used = new Set();
-      const resultRows = ['8강', '4강', '결승', '최종 선택'];
       const container = document.getElementById('results-tables');
       container.innerHTML = '';
 
-      const table = document.createElement('table');
+      const stages = ['8강', '4강', '결승', '최종 선택'];
+      const used = new Set();
 
-      resultRows.forEach(label => {
-        const result = roundResults.find(r => r.roundName.includes(label));
+      stages.forEach(stage => {
+        const result = roundResults.find(r => r.roundName === stage);
         if (result) {
+          const table = document.createElement('table');
+          table.className = 'summary-table';
+          const header = table.insertRow();
+          const cell = document.createElement('th');
+          cell.colSpan = 2;
+          cell.innerText = stage + ' 결과';
+          header.appendChild(cell);
+
           const row = table.insertRow();
-          row.insertCell().innerText = label;
-          result.items.forEach(item => {
-            if (!used.has(item.major)) {
-              used.add(item.major);
-              row.insertCell().innerText = item.major;
-            }
-          });
+          row.insertCell().innerText = stage;
+          const majors = result.items
+            .map(item => item.major)
+            .filter(major => {
+              if (used.has(major)) return false;
+              used.add(major);
+              return true;
+            });
+          row.insertCell().innerText = majors.join(' / ') || '-';
+
+          container.appendChild(table);
         }
       });
-
-      container.appendChild(table);
 
       if (roundResults.length >= 6) {
         document.getElementById('pdfBtn').classList.remove('hidden');
