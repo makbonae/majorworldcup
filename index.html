@@ -63,6 +63,7 @@
     let userInfo = {};
     let selectedCategory = '';
     let roundResults = [];
+    let roundHistory = [];
 
     document.getElementById('inputForm').style.display = 'block';
 
@@ -121,6 +122,8 @@
       }
 
       roundData = pairs;
+      roundHistory.push([...pairs]);
+      
       const nextRound = [];
       let index = 0;
 
@@ -158,13 +161,12 @@
       return div;
     }
 
-    function saveRoundResult(winner, previousRoundData) {
-      const final = winner;
-      const finals = previousRoundData?.slice(0, 2) || [];
-      const semis = previousRoundData?.slice(0, 4) || [];
-      const quarters = previousRoundData?.slice(0, 8) || [];
+    function saveRoundResult(winner) {
+      const finals = roundHistory.at(-1)?.slice(0, 2) || [];
+      const semis = roundHistory.at(-2)?.slice(0, 4) || [];
+      const quarters = roundHistory.at(-3)?.slice(0, 8) || [];
 
-      roundResults.push({ final, finals, semis, quarters });
+      roundResults.push({ final: winner, finals, semis, quarters });
     }
 
     function showSummary() {
