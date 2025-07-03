@@ -184,12 +184,6 @@ function recordResult(finalWinner) {
     semis: semiRound.map(x => x.major),               // 4강 진출자 4명
     quarters: quarterRound.map(x => x.major)          // 8강 진출자 8명
   
-  // 최종 저장
-  results.push({
-    final: final.major,
-    finals: finals,
-    semis: semis,
-    quarters: quarters
   });
 }
 
