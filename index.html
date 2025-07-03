@@ -173,29 +173,19 @@ function runMatch(data, bye) {
 }
 
 function recordResult(finalWinner) {
-  const final = finalWinner;
+  // 각 라운드별 진출자 전체를 직접 추출
   const finalRound = roundResults.at(-1) || [];   // 결승 (2명)
   const semiRound = roundResults.at(-2) || [];    // 4강 (4명)
   const quarterRound = roundResults.at(-3) || []; // 8강 (8명)
 
-  // 결승 진출자 = 최종 우승자 + 결승 탈락자
-  const finals = finalRound.map(x => x.major);  // 2명 모두 표시
+  results.push({
+    final: finalWinner.major,                         // 우승자 1명
+    finals: finalRound.map(x => x.major),             // 결승 진출자 2명
+    semis: semiRound.map(x => x.major),               // 4강 진출자 4명
+    quarters: quarterRound.map(x => x.major)          // 8강 진출자 8명
+  });
+}
 
-  // 4강 진출자 = 결승 라운드 2명 + 4강에서 탈락한 2명
-  const finalsIdSet = new Set(finalRound.map(x => x.id));
-  const semis = semiRound.filter(x => !finalsIdSet.has(x.id)).map(x => x.major);  // 4명 중 결승에 못 간 2명
-
-  // 8강 진출자 = 8명 중에서 4강까지 못 간 나머지 4명
-  const semisIdSet = new Set([...finalRound.map(x => x.id), ...semis.map(name =>
-    // name으로 id를 추정할 수 없기 때문에, 이 부분은 ID 기반 필터링으로 다시 추정해야 함
-    // 아래에서 직접 매칭할 수 있도록 처리
-    {
-      const found = semiRound.find(item => item.major === name);
-      return found ? found.id : null;
-    }
-  )].filter(id => id !== null));
-
-  const quarters = quarterRound.filter(x => !semisIdSet.has(x.id)).map(x => x.major);
 
   // 최종 저장
   results.push({
