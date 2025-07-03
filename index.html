@@ -174,25 +174,26 @@ function runMatch(data, bye) {
 
 function recordResult(finalWinner) {
   const final = finalWinner;
-  const last = roundResults.at(-1) || [];
-  const prev = roundResults.at(-2) || [];
-  const preprev = roundResults.at(-3) || [];
+  const last = roundResults.at(-1) || [];     // 결승
+  const prev = roundResults.at(-2) || [];     // 4강
+  const preprev = roundResults.at(-3) || [];  // 8강
 
-  const finals = last.filter(x => x.id !== final.id).slice(0, 1);
+  const finals = last.filter(x => x.id !== final.id).slice(0, 1); // 결승 탈락자
   const finalsId = new Set([final.id, ...finals.map(f => f.id)]);
-  
-  const semis = prev.filter(x => !finalsId.has(x.id)).slice(0, 2);
+
+  const semis = prev.filter(x => !finalsId.has(x.id)).slice(0, 2); // 4강 탈락자
   const semisId = new Set([...finalsId, ...semis.map(s => s.id)]);
-  
-  const quarters = preprev.filter(x => !semisId.has(x.id)).slice(0, 4);
+
+  const quarters = preprev.filter(x => !semisId.has(x.id)).slice(0, 4); // 8강 탈락자
 
   results.push({
     final: final.major,
-    finals: finals.map(f => f.major),
+    finals: [final, ...finals].map(f => f.major),
     semis: semis.map(s => s.major),
     quarters: quarters.map(q => q.major)
   });
 }
+
 
 
 function showResults() {
@@ -200,6 +201,7 @@ function showResults() {
   document.getElementById("resultArea").classList.remove("hidden");
   const tree = document.getElementById("summaryTree");
   tree.innerHTML = `<h2>${userInfo.school} ${userInfo.studentId} ${userInfo.studentName} 님의 선택 결과</h2>`;
+
   results.forEach((r, i) => {
     tree.innerHTML += `
     <table class='summary-table'>
@@ -210,14 +212,16 @@ function showResults() {
       <tr><th>8강 진출자</th><td>${r.quarters.join(" / ")}</td></tr>
     </table>`;
   });
+
   document.getElementById("pdfBtn").classList.toggle("hidden", results.length < 3);
   document.getElementById("nextRoundBtn").classList.toggle("hidden", results.length >= 3);
 }
 
+
 function nextRound() {
   roundData = [];
   roundStages = {};
-  roundResults = [];  // ✅ 1회 게임이 끝나고, 새로운 회차를 시작할 때 초기화
+  roundResults = [];  // ✅ 이것만 초기화
   document.getElementById("resultArea").classList.add("hidden");
   document.getElementById("pdfBtn").classList.add("hidden");
   document.getElementById("nextRoundBtn").classList.add("hidden");
