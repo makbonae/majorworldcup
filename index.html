@@ -1,4 +1,4 @@
-/ver05
+/ver06
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -217,22 +217,26 @@
         container.innerHTML = '';
         if (index >= pairs.length) {
           let nextRoundName;
-          if (nextRound.length === 24 && roundData.autoPass) {
-            nextRoundName = '32강'; // 실제로는 32강임
-          } else if (nextRound.length === 1) {
-            nextRoundName = '결승'; // 2강은 결승으로 표기
-          } else if (nextRound.length === 0) {
-            nextRoundName = '최종 선택 결과 정리중...';
-          } else {
-            nextRoundName = `${nextRound.length}강`;
-          }
+          if (index >= pairs.length) {
+            let nextRoundName;
 
-          showLoading(nextRoundName);
-          setTimeout(() => {
-            hideLoading();
-            playRound(nextRound);
-          }, 2000);
-          return;
+            if (nextRound.length === 0) {
+              nextRoundName = '최종 선택 결과 정리중...';  // ✅ 먼저 검사
+            } else if (nextRound.length === 1) {
+              nextRoundName = '결승'; // ✅ 2강이 아니라 결승으로 표기
+            } else if (nextRound.length === 24 && roundData.autoPass) {
+              nextRoundName = '32강';
+            } else {
+              nextRoundName = `${nextRound.length}강`;
+            }
+
+            showLoading(nextRoundName);
+            setTimeout(() => {
+              hideLoading();
+              playRound(nextRound);
+            }, 2000);
+            return;
+          }
         }
         
         const card1 = pairs[index];
@@ -322,23 +326,32 @@
         .in('major', majors);
       if (error) return alert('설명 로딩 실패');
 
-      let htmlContent = `<html><head><title>전공 설명</title><meta charset='UTF-8'></head><body style="font-family: sans-serif; font-size: 18px;">`;
+      let htmlContent = `
+        <html>
+          <head>
+            <title>전공 설명</title>
+            <meta charset='UTF-8'>
+          </head>
+          <body style="font-family: sans-serif; font-size: 18px; padding: 20px;">
+            <p><strong>${userInfo.school} ${userInfo.id} ${userInfo.name}</strong> 님의 선택한 전공에 대한 안내입니다.</p>
+`      ;
 
       data.forEach((d, i) => {
         htmlContent += `
-          <div>
-            <div><span style="color:green; font-weight: bold;">1. 선택 전공: </span>${d.major}</div>
-            <div><span style="color:green; font-weight: bold;">2. 학과 개요: </span>${d.desc}</div>
-            <div><span style="color:green; font-weight: bold;">3. 유사 학과: </span>${d.friends}</div>
-            <div style="color:red; font-weight: bold; margin-top: 10px;">관련 고등학교 선택 과목 예시</div>
-            <div><span style="color:green; font-weight: bold;">4. 일반 선택 과목: </span>${d.sub1 || '정보 없음'}</div>
-            <div><span style="color:green; font-weight: bold;">5. 진로 선택 과목: </span>${d.sub2 || '정보 없음'}</div>
-            <div><span style="color:green; font-weight: bold;">6. 융합 선택 과목: </span>${d.sub3 || '정보 없음'}</div>
-            <br><br>
-          </div>`;
+          <div style="margin-bottom: 40px;">
+            <div style="margin-bottom: 10px;"><span style="color:skyblue; font-weight: bold;">1. 선택 전공: </span>${d.major}</div>
+            <div style="margin-bottom: 10px;"><span style="color:skyblue; font-weight: bold;">2. 학과 개요: </span>${d.desc}</div>
+            <div style="margin-bottom: 10px;"><span style="color:skyblue; font-weight: bold;">3. 유사 학과: </span>${d.friends}</div>
+            <div style="color:hotpink; font-weight: bold; margin: 20px 0 10px;">📚 관련 고등학교 선택 과목 예시</div>
+            <div style="margin-bottom: 6px;"><span style="color:skyblue; font-weight: bold;">4. 일반 선택 과목: </span>${d.sub1 || '정보 없음'}</div>
+            <div style="margin-bottom: 6px;"><span style="color:skyblue; font-weight: bold;">5. 진로 선택 과목: </span>${d.sub2 || '정보 없음'}</div>
+            <div><span style="color:skyblue; font-weight: bold;">6. 융합 선택 과목: </span>${d.sub3 || '정보 없음'}</div>
+          </div>
+  `      ;
       });
 
       htmlContent += `</body></html>`;
+
 
       const win = window.open();
       win.document.write(htmlContent);
