@@ -1,4 +1,4 @@
-/ver06
+/ver07
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -220,9 +220,9 @@
           if (index >= pairs.length) {
             let nextRoundName;
 
-            if (nextRound.length === 0) {
+            if (nextRound.length === 1) {
               nextRoundName = '최종 선택 결과 정리중...';  // ✅ 먼저 검사
-            } else if (nextRound.length === 1) {
+            } else if (nextRound.length === 2) {
               nextRoundName = '결승'; // ✅ 2강이 아니라 결승으로 표기
             } else if (nextRound.length === 24 && roundData.autoPass) {
               nextRoundName = '32강';
@@ -310,7 +310,13 @@
         document.getElementById('repeatButton').innerHTML = '<button onclick="repeatRound()">결과 저장하고 한 번 더!</button>';
         document.getElementById('repeatButton').style.display = 'block';
       } else {
-        document.getElementById('pdfButton').innerHTML = '<button onclick="downloadPDF()">PDF 저장</button><button onclick="openDescriptions()">설명보기</button>';
+        document.getElementById('pdfButton').innerHTML = `
+          <p style="font-size: 20px; margin-bottom: 10px;">관심 있는 전공 학과에 체크표시를 하고 <strong>설명보기</strong> 버튼을 눌러 보세요.</p>
+          <div>
+            <button onclick="downloadPDF()">PDF 저장</button>
+            <button onclick="openDescriptions()">설명보기</button>
+          </div>
+        `;
         document.getElementById('pdfButton').style.display = 'block';
       }
     }
