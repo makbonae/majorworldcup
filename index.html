@@ -1,4 +1,4 @@
-/ver04
+/ver05
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -316,16 +316,35 @@
       const majors = Array.from(checked).map(cb => cb.dataset.major);
       if (majors.length === 0) return alert('선택된 전공이 없습니다');
 
-      const { data, error } = await supabaseClient.from(selectedCategory).select('*').in('major', majors);
+      const { data, error } = await supabaseClient
+        .from(selectedCategory)
+        .select('*')
+        .in('major', majors);
       if (error) return alert('설명 로딩 실패');
 
-      const tableHtml = `<html><head><title>전공 설명</title><meta charset='UTF-8'></head><body><table border='1'><tr><th>전공</th><th>친구</th><th>설명</th></tr>
-        ${data.map(d => `<tr><td>${d.major}</td><td>${d.friends}</td><td>${d.desc}</td></tr>`).join('')}
-      </table></body></html>`;
+      let htmlContent = `<html><head><title>전공 설명</title><meta charset='UTF-8'></head><body style="font-family: sans-serif; font-size: 18px;">`;
+
+      data.forEach((d, i) => {
+        htmlContent += `
+          <div>
+            <div><span style="color:green; font-weight: bold;">1. 선택 전공: </span>${d.major}</div>
+            <div><span style="color:green; font-weight: bold;">2. 학과 개요: </span>${d.desc}</div>
+            <div><span style="color:green; font-weight: bold;">3. 유사 학과: </span>${d.friends}</div>
+            <div style="color:red; font-weight: bold; margin-top: 10px;">관련 고등학교 선택 과목 예시</div>
+            <div><span style="color:green; font-weight: bold;">4. 일반 선택 과목: </span>${d.sub1 || '정보 없음'}</div>
+            <div><span style="color:green; font-weight: bold;">5. 진로 선택 과목: </span>${d.sub2 || '정보 없음'}</div>
+            <div><span style="color:green; font-weight: bold;">6. 융합 선택 과목: </span>${d.sub3 || '정보 없음'}</div>
+            <br><br>
+          </div>`;
+      });
+
+      htmlContent += `</body></html>`;
+
       const win = window.open();
-      win.document.write(tableHtml);
+      win.document.write(htmlContent);
       win.document.close();
     }
+
 
     function downloadPDF() {
       const element = document.getElementById('resultArea');
