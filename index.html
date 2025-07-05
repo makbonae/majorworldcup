@@ -1,4 +1,4 @@
-/ver07
+/ver08
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -104,8 +104,11 @@
 <body>
   <div class="input-container" id="inputForm">
     <input id="school" placeholder="학교명">
+    <div style="height:10px"></div>
     <input id="student_id" placeholder="학번">
+    <div style="height:10px"></div>
     <input id="student_name" placeholder="이름">
+    <div style="height:10px"></div>
     <button onclick="showInstruction()">다음</button>
   </div>
   <div class="instruction" id="instruction">
@@ -221,7 +224,7 @@
             let nextRoundName;
 
             if (nextRound.length === 1) {
-              nextRoundName = '최종 선택 결과 정리중...';  // ✅ 먼저 검사
+              nextRoundName = '최종 선택 결과 ';  // ✅ 먼저 검사
             } else if (nextRound.length === 2) {
               nextRoundName = '결승'; // ✅ 2강이 아니라 결승으로 표기
             } else if (nextRound.length === 24 && roundData.autoPass) {
@@ -311,7 +314,7 @@
         document.getElementById('repeatButton').style.display = 'block';
       } else {
         document.getElementById('pdfButton').innerHTML = `
-          <p style="font-size: 20px; margin-bottom: 10px;">관심 있는 전공 학과에 체크표시를 하고 <strong>설명보기</strong> 버튼을 눌러 보세요.</p>
+          <p style="font-size: 20px; margin-bottom: 10px;">※ 관심 있는 전공 학과에 체크표시를 하고 <strong>설명보기</strong> 버튼을 눌러 보세요.</p>
           <div>
             <button onclick="downloadPDF()">PDF 저장</button>
             <button onclick="openDescriptions()">설명보기</button>
@@ -345,12 +348,13 @@
       data.forEach((d, i) => {
         htmlContent += `
           <div style="margin-bottom: 40px;">
-            <div style="margin-bottom: 10px;"><span style="color:skyblue; font-weight: bold;">1. 선택 전공: </span>${d.major}</div>
-            <div style="margin-bottom: 10px;"><span style="color:skyblue; font-weight: bold;">2. 학과 개요: </span>${d.desc}</div>
-            <div style="margin-bottom: 10px;"><span style="color:skyblue; font-weight: bold;">3. 유사 학과: </span>${d.friends}</div>
-            <div style="color:hotpink; font-weight: bold; margin: 20px 0 10px;">📚 관련 고등학교 선택 과목 예시</div>
-            <div style="margin-bottom: 6px;"><span style="color:skyblue; font-weight: bold;">4. 일반 선택 과목: </span>${d.sub1 || '정보 없음'}</div>
-            <div style="margin-bottom: 6px;"><span style="color:skyblue; font-weight: bold;">5. 진로 선택 과목: </span>${d.sub2 || '정보 없음'}</div>
+            <div style="margin-bottom: 20px;"><span style="color:darkorange; font-weight: bold; font-size: 24px;">🔖 선택 전공: </span>${d.major}</div>
+            <div style="margin-bottom: 10px;"><span style="color:dodgerblue; font-weight: bold;">1. 전공 학과: </span>${d.major_ref}</div>
+            <div style="margin-bottom: 10px;"><span style="color:dodgerblue; font-weight: bold;">2. 학과 개요: </span>${d.desc}</div>
+            <div style="margin-bottom: 10px;"><span style="color:dodgerblue; font-weight: bold;">3. 유사 학과: </span>${d.friends}</div>
+            <div style="color:magenta; font-weight: bold; margin: 20px 0 10px;">📖 관련 고등학교 선택 과목 예시</div>
+            <div style="margin-bottom: 6px;"><span style="color:dodgerblue; font-weight: bold;">4. 일반 선택 과목: </span>${d.sub1 || '정보 없음'}</div>
+            <div style="margin-bottom: 6px;"><span style="color:dodgerblue; font-weight: bold;">5. 진로 선택 과목: </span>${d.sub2 || '정보 없음'}</div>
             <div><span style="color:skyblue; font-weight: bold;">6. 융합 선택 과목: </span>${d.sub3 || '정보 없음'}</div>
           </div>
   `      ;
