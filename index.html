@@ -20,24 +20,22 @@
     }
     .input-container {
       display: flex;
-      flex-direction: column;     /* ✅ 세로 정렬 */
-      align-items: center;        /* ✅ 가로 중앙 정렬 */
-      justify-content: center;    /* ✅ 세로 중앙 정렬 */
-      gap: 10px;                  /* ✅ 요소 간 간격 */
-      height: 100vh;              /* ✅ 화면 전체 높이 사용 */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      height: 100vh;
     }
     .input-container input,
     .input-container button {
-      width: 300px;               /* ✅ 입력창과 버튼 폭 일치 */
+      width: 300px;
       height: 48px;
       font-size: 18px;
       padding: 10px 16px;
-      line-height: 1.2;
       box-sizing: border-box;
       border: 1px solid #ccc;
       border-radius: 6px;
     }
-
     .category-select {
       display: flex;
       justify-content: center;
@@ -54,12 +52,11 @@
       color: blue;
       margin-top: 10px;
       word-break: break-word;
-      overflow-wrap: break-word;
       white-space: normal;
     }
     .card {
       display: inline-block;
-      width: 40%;              /* ✅ 가로는 고정 */
+      width: 40%;
       margin: 20px;
       padding: 30px;
       border: 2px solid #aaa;
@@ -87,17 +84,15 @@
     @keyframes spin {
       100% { transform: rotate(360deg); }
     }
-    
     table {
       margin: auto;
       border-collapse: collapse;
       margin-top: 20px;
     }
-    td {
+    td, th {
       border: 1px solid #ccc;
       padding: 10px 20px;
     }
-    
     button {
       font-size: 24px;
       margin: 10px;
@@ -105,18 +100,13 @@
     }
   </style>
 </head>
-  
 <body>
   <div class="input-container" id="inputForm">
     <input id="school" placeholder="학교명">
-    <div style="height:10px"></div>
     <input id="student_id" placeholder="학번">
-    <div style="height:10px"></div>
     <input id="student_name" placeholder="이름">
-    <div style="height:10px"></div>
     <button onclick="showInstruction()">다음</button>
   </div>
-
   <div class="instruction" id="instruction">
     <p>① 이 프로그램은 대학 전공학과에 대한 자신의 관심 순위를 알아보기 위해 제작되었습니다.<br>
     ② [인문+공통+체육], [자연+공통] 2개 카테고리 중에 하나를 선택하여 진행합니다.<br>
@@ -129,12 +119,12 @@
       <button onclick="startCategory('jayeon')">자연+공통</button>
     </div>
   </div>
-
+  
   <div class="round-loading" id="roundLoading">
     <div class="spinner"></div>
     <p id="roundText"></p>
   </div>
-
+  
   <div class="tournament" id="tournament"></div>
   <div class="result-area" id="resultArea"></div>
   <div id="repeatButton"></div>
@@ -147,12 +137,12 @@
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let roundData = [];
+    let roundResults = [];
+    let roundHistory = [];
     let currentRound = 1;
     let maxRounds = 3;
     let userInfo = {};
     let selectedCategory = '';
-    let roundResults = [];
-    let roundHistory = [];
 
     document.getElementById('inputForm').style.display = 'block';
 
@@ -172,7 +162,7 @@
       document.getElementById('pdfButton').style.display = 'none';
       showLoading('64강');
 
-      let { data, error } = await supabaseClient.from(table).select('*');
+      const { data, error } = await supabase.from(table).select('*');
       if (error) return alert('데이터 불러오기 실패');
 
       data = shuffleArray(data);
@@ -201,14 +191,14 @@
       return shuffleArray(items);
     }
 
+
     function playRound(pairs) {
       const container = document.getElementById('tournament');
       container.innerHTML = '';
 
-      // ✅ 64강 이후 32강 진입 시, autoPass 8개 합치기
       if (pairs.length === 24 && roundData.autoPass) {
-        pairs = [...pairs, ...roundData.autoPass];  // 24 + 8 = 32
-        delete roundData.autoPass;                  // 중복 추가 방지
+        pairs = [...pairs, ...roundData.autoPass];
+        delete roundData.autoPass;
       }
 
       if (pairs.length === 1) {
@@ -224,7 +214,6 @@
 
       function nextPair() {
         container.innerHTML = '';
-
         if (index >= pairs.length) {
           let nextRoundName;
           if (nextRound.length === 24 && roundData.autoPass) {
@@ -244,8 +233,8 @@
           }, 2000);
           return;
         }
-
-        const card1 = pairs[index];
+        
+        cconst card1 = pairs[index];
         const card2 = pairs[index + 1];
         const cardA = createCard(card1);
         const cardB = createCard(card2);
@@ -268,7 +257,6 @@
         cardA.onclick = () => { nextRound.push(card1); index += 2; nextPair(); };
         cardB.onclick = () => { nextRound.push(card2); index += 2; nextPair(); };
       }
-
       nextPair();
     }
 
@@ -290,33 +278,62 @@
       document.getElementById('tournament').style.display = 'none';
       const result = document.getElementById('resultArea');
       result.style.display = 'block';
-
-      let html = `<p>${userInfo.school} ${userInfo.id} ${userInfo.name} 님이 선택한 결과입니다</p>`;
-
+      let html = `<p>${userInfo.school} ${userInfo.id} ${userInfo.name} 님의 선택 결과</p>`;
       roundResults.forEach((round, idx) => {
         const finals = round.finals.filter(x => x.major !== round.final.major);
         const semis = round.semis.filter(x => !round.finals.includes(x));
         const quarters = round.quarters.filter(x => !round.semis.includes(x));
 
-        html += `
-          <h3>Round ${idx + 1}</h3>
-          <table>
-            <tr><td>최종선택</td><td>${round.final.major}</td></tr>
-            <tr><td>결승진출</td><td>${finals.map(x => x.major).join(', ') || '-'}</td></tr>
-            <tr><td>4강진출</td><td>${semis.map(x => x.major).join(', ') || '-'}</td></tr>
-            <tr><td>8강진출</td><td>${quarters.map(x => x.major).join(', ') || '-'}</td></tr>
-          </table>`;
+        html += `<h3>Round ${idx + 1}</h3><table><tr><th>구분</th><th>선택</th><th>전공</th>`;
+        html += `<tr><td>최종선택</td><td><input type='checkbox' class='desc-check' data-major='${round.final.major}'></td><td>${round.final.major}</td></tr>`;
+        finals.forEach(item => html += `<tr><td>결승진출</td><td><input type='checkbox' class='desc-check' data-major='${item.major}'></td><td>${item.major}</td></tr>`);
+        if (semis.length > 0) {
+          html += `<tr><td rowspan="1">4강진출</td>`;
+          semis.forEach(item => html += `<td><input type='checkbox' class='desc-check' data-major='${item.major}'></td><td>${item.major}</td>`);
+          html += `</tr>`;
+        }
+        if (quarters.length > 0) {
+          html += `<tr><td rowspan="1">8강진출</td>`;
+          quarters.forEach(item => html += `<td><input type='checkbox' class='desc-check' data-major='${item.major}'></td><td>${item.major}</td>`);
+          html += `</tr>`;
+        }
+        html += `</table>`;
       });
-
       result.innerHTML = html;
 
       if (currentRound < maxRounds) {
-        document.getElementById('repeatButton').innerHTML = '<button onclick="repeatRound()">결과 저장하고 한번 더!</button>';
+        document.getElementById('repeatButton').innerHTML = '<button onclick="repeatRound()">결과 저장하고 한 번 더!</button>';
         document.getElementById('repeatButton').style.display = 'block';
       } else {
-        document.getElementById('pdfButton').innerHTML = '<button onclick="downloadPDF()">PDF 저장</button>';
+        document.getElementById('pdfButton').innerHTML = '<button onclick="downloadPDF()">PDF 저장</button><button onclick="openDescriptions()">설명보기</button>';
         document.getElementById('pdfButton').style.display = 'block';
       }
+    }
+
+    async function openDescriptions() {
+      const checked = document.querySelectorAll('.desc-check:checked');
+      const majors = Array.from(checked).map(cb => cb.dataset.major);
+      if (majors.length === 0) return alert('선택된 전공이 없습니다');
+
+      const { data, error } = await supabase.from(selectedCategory).select('*').in('major', majors);
+      if (error) return alert('설명 로딩 실패');
+
+      const tableHtml = `<html><head><title>전공 설명</title><meta charset='UTF-8'></head><body><table border='1'><tr><th>전공</th><th>친구</th><th>설명</th></tr>
+        ${data.map(d => `<tr><td>${d.major}</td><td>${d.friends}</td><td>${d.desc}</td></tr>`).join('')}
+      </table></body></html>`;
+      const win = window.open();
+      win.document.write(tableHtml);
+      win.document.close();
+    }
+
+    function downloadPDF() {
+      const element = document.getElementById('resultArea');
+      html2canvas(element).then(canvas => {
+        const img = canvas.toDataURL('image/png');
+        const pdf = new jspdf.jsPDF();
+        pdf.addImage(img, 'PNG', 10, 10, 190, 0);
+        pdf.save(`${userInfo.id}_${userInfo.name}_이상형월드컵결과.pdf`);
+      });
     }
 
     function repeatRound() {
@@ -324,28 +341,13 @@
       startCategory(selectedCategory);
     }
 
-    function showLoading(roundName) {
+    function showLoading(name) {
       document.getElementById('roundLoading').style.display = 'block';
-      if (roundName === '2강') roundName = '결승';
-      if (roundName === '1강') {
-        document.getElementById('roundText').innerText = `최종 선택 결과 정리중...`;
-      } else {
-        document.getElementById('roundText').innerText = `${roundName} 로딩중...`;
-      }
+      document.getElementById('roundText').innerText = `${name} 로딩중...`;
     }
 
     function hideLoading() {
       document.getElementById('roundLoading').style.display = 'none';
-    }
-
-    function downloadPDF() {
-      const element = document.getElementById('resultArea');
-      html2canvas(element).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jspdf.jsPDF();
-        pdf.addImage(imgData, 'PNG', 10, 10, 190, 0);
-        pdf.save(`${userInfo.id}_${userInfo.name}_이상형월드컵결과.pdf`);
-      });
     }
   </script>
 </body>
