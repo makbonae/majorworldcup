@@ -1,4 +1,4 @@
-/ver10
+/ver11
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -7,8 +7,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://raw.githack.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.min.js"></script>
-
   <style>
     body {
       font-size: 24px;
@@ -369,11 +367,11 @@
             <div style="margin-bottom: 6px;"><span style="color:dodgerblue; font-weight: bold;">5. 진로 선택 과목: </span>${d.sub2 || '정보 없음'}</div>
             <div><span style="color:dodgerblue; font-weight: bold;">6. 융합 선택 과목: </span>${d.sub3 || '정보 없음'}</div>
           </div>
-  `      ;
+        `;
       });
 
       htmlContent += `
-            </div>
+            </div> <!-- descriptionArea 닫기 -->
             <div class="save-button">
               <button onclick="saveDescriptionPDF()">📄 PDF로 저장</button>
             </div>
@@ -383,7 +381,7 @@
                 const element = document.getElementById('descriptionArea');
                 const opt = {
                   margin:       0.5,
-                  filename:     '${userInfo.id}_${userInfo.name}_님의 선택 전공 상세 보기.pdf',
+                  filename:     '${userInfo.id}_${userInfo.name}_전공상세.pdf',
                   image:        { type: 'jpeg', quality: 0.98 },
                   html2canvas:  { scale: 2 },
                   jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
