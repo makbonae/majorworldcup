@@ -131,7 +131,17 @@
         container.innerHTML = '';
 
         if (index >= pairs.length) {
-          showLoading(`${nextRound.length}강`);
+          function showLoading(roundName) {
+            document.getElementById('roundLoading').style.display = 'block';
+  
+            // ✅ 명칭 변경 처리
+            if (roundName === '2강') roundName = '결승';
+            if (roundName === '1강') {
+              document.getElementById('roundText').innerText = `최종 선택 결과 정리중...`;
+        } else {
+          document.getElementById('roundText').innerText = `${roundName} 로딩중...`;
+        }
+      }
           setTimeout(() => {
             hideLoading();
             playRound(nextRound);
