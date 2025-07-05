@@ -18,6 +18,14 @@
       display: none;
       margin-top: 50px;
     }
+    .input-container input {
+      font-size: 24px;           /* ✅ 버튼과 동일한 글자 크기 */
+      padding: 10px 20px;        /* ✅ 버튼과 동일한 여백 */
+      box-sizing: border-box;    /* ✅ padding 포함 높이 유지 */
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
     .category-select {
       display: flex;
       justify-content: center;
@@ -67,6 +75,7 @@
     @keyframes spin {
       100% { transform: rotate(360deg); }
     }
+    
     table {
       margin: auto;
       border-collapse: collapse;
@@ -76,23 +85,15 @@
       border: 1px solid #ccc;
       padding: 10px 20px;
     }
+    
     button {
       font-size: 24px;
       margin: 10px;
       padding: 10px 20px;
     }
-    .card {
-      display: inline-block;
-      margin: 20px;
-      padding: 30px;
-      border: 2px solid #aaa;
-      border-radius: 10px;
-      background: white;
-      cursor: pointer;
-      vertical-align: top;
-    }
   </style>
 </head>
+  
 <body>
   <div class="input-container" id="inputForm">
     <input id="school" placeholder="학교명"> 
