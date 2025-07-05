@@ -1,4 +1,4 @@
-/ver08
+/ver09
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -7,6 +7,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://raw.githack.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.min.js"></script>
+
   <style>
     body {
       font-size: 24px;
@@ -340,15 +342,24 @@
           <head>
             <title>전공 설명</title>
             <meta charset='UTF-8'>
+            <script src="https://raw.githack.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.min.js"></script>
+            <style>
+              body { font-family: sans-serif; font-size: 18px; padding: 20px; }
+              .pdf-container { max-width: 800px; margin: auto; }
+              .save-button { margin-top: 30px; }
+            </style>
           </head>
-          <body style="font-family: sans-serif; font-size: 18px; padding: 20px;">
-            <p><strong>${userInfo.school} ${userInfo.id} ${userInfo.name}</strong> 님의 선택한 전공에 대한 안내입니다.</p>
-`      ;
+          <body>
+            <div class="pdf-container" id="descriptionArea">
+              <p><strong>${userInfo.school} ${userInfo.id} ${userInfo.name}</strong> 님의 선택한 전공에 대한 안내입니다.</p>
+      `;
 
       data.forEach((d, i) => {
         htmlContent += `
-          <div style="margin-bottom: 40px;">
-            <div style="margin-bottom: 20px;"><span style="color:darkorange; font-weight: bold; font-size: 24px;">🔖 선택 전공: </span>${d.major}</div>
+            <div style="margin-bottom: 40px;">
+              <span style="color:darkorange; font-weight: bold; font-size: 24px;">🔖 선택 전공: </span>
+              <span style="font-size: 24px; font-weight: bold;">${d.major}</span>
+            </div>
             <div style="margin-bottom: 10px;"><span style="color:dodgerblue; font-weight: bold;">1. 전공 학과: </span>${d.major_ref}</div>
             <div style="margin-bottom: 10px;"><span style="color:dodgerblue; font-weight: bold;">2. 학과 개요: </span>${d.desc}</div>
             <div style="margin-bottom: 10px;"><span style="color:dodgerblue; font-weight: bold;">3. 유사 학과: </span>${d.friends}</div>
@@ -360,8 +371,28 @@
   `      ;
       });
 
-      htmlContent += `</body></html>`;
+      htmlContent += `
+            </div>
+            <div class="save-button">
+              <button onclick="saveDescriptionPDF()">📄 PDF로 저장</button>
+            </div>
 
+            <script>
+              function saveDescriptionPDF() {
+                const element = document.getElementById('descriptionArea');
+                const opt = {
+                  margin:       0.5,
+                  filename:     '${userInfo.id}_${userInfo.name}_님의 선택 전공 상세 보기.pdf',
+                  image:        { type: 'jpeg', quality: 0.98 },
+                  html2canvas:  { scale: 2 },
+                  jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+                };
+                html2pdf().set(opt).from(element).save();
+              }
+            </script>
+          </body>
+        </html>
+      `;
 
       const win = window.open();
       win.document.write(htmlContent);
