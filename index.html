@@ -1,4 +1,4 @@
-/ver11
+/ver12
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -340,12 +340,6 @@
           <head>
             <title>전공 설명</title>
             <meta charset='UTF-8'>
-            <script src="https://raw.githack.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.min.js"></script>
-            <style>
-              body { font-family: sans-serif; font-size: 18px; padding: 20px; }
-              .pdf-container { max-width: 800px; margin: auto; }
-              .save-button { margin-top: 30px; }
-            </style>
           </head>
           <body>
             <div class="pdf-container" id="descriptionArea">
@@ -370,28 +364,7 @@
         `;
       });
 
-      htmlContent += `
-            </div> <!-- descriptionArea 닫기 -->
-            <div class="save-button">
-              <button onclick="saveDescriptionPDF()">📄 PDF로 저장</button>
-            </div>
-
-            <script>
-              function saveDescriptionPDF() {
-                const element = document.getElementById('descriptionArea');
-                const opt = {
-                  margin:       0.5,
-                  filename:     '${userInfo.id}_${userInfo.name}_전공상세.pdf',
-                  image:        { type: 'jpeg', quality: 0.98 },
-                  html2canvas:  { scale: 2 },
-                  jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-                };
-                html2pdf().set(opt).from(element).save();
-              }
-            </script>
-          </body>
-        </html>
-      `;
+      htmlContent += `</body></html>`;
 
       const win = window.open();
       win.document.write(htmlContent);
