@@ -177,9 +177,11 @@
 
       data = shuffleArray(data);
       if (table === 'inmun') {
-        let autoPass = data.slice(0, 8);
-        let others = data.slice(8);
-        roundData = buildTournament([...others.slice(0, 56), ...autoPass]);
+        const selected = data.slice(0, 56);           // 전체 56개 사용
+        const autoPass = selected.slice(0, 8);        // 부전승 8개
+        const others = selected.slice(8);             // 나머지 48개로 64강 진행
+        roundData = buildTournament(others);          // 64강: 24쌍
+        roundData.autoPass = autoPass;                // 이후 32강에서 사용
       } else {
         roundData = buildTournament(data.slice(0, 64));
       }
@@ -202,6 +204,12 @@
     function playRound(pairs) {
       const container = document.getElementById('tournament');
       container.innerHTML = '';
+
+      // ✅ 64강 이후 32강 진입 시, autoPass 8개 합치기
+      if (pairs.length === 24 && roundData.autoPass) {
+        pairs = [...pairs, ...roundData.autoPass];  // 24 + 8 = 32
+        delete roundData.autoPass;                  // 중복 추가 방지
+      }
 
       if (pairs.length === 1) {
         saveRoundResult(pairs[0]);
