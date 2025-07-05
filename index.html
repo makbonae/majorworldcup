@@ -26,10 +26,14 @@
       gap: 10px;                  /* ✅ 요소 간 간격 */
       height: 100vh;              /* ✅ 화면 전체 높이 사용 */
     }
-    .input-container input {
-      font-size: 24px;           /* ✅ 버튼과 동일한 글자 크기 */
-      padding: 10px 20px;        /* ✅ 버튼과 동일한 여백 */
-      box-sizing: border-box;    /* ✅ padding 포함 높이 유지 */
+    .input-container input,
+    .input-container button {
+      width: 300px;               /* ✅ 입력창과 버튼 폭 일치 */
+      height: 48px;
+      font-size: 18px;
+      padding: 10px 16px;
+      line-height: 1.2;
+      box-sizing: border-box;
       border: 1px solid #ccc;
       border-radius: 6px;
     }
