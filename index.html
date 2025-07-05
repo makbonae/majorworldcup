@@ -1,4 +1,4 @@
-/ver02
+/ver03
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -163,7 +163,7 @@
       document.getElementById('pdfButton').style.display = 'none';
       showLoading('64강');
 
-      const { data, error } = await supabaseClient.from(table).select('*');
+      let { data, error } = await supabaseClient.from(table).select('*');
       if (error) return alert('데이터 불러오기 실패');
 
       data = shuffleArray(data);
