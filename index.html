@@ -1,4 +1,4 @@
-/ver16
+/ver17
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -99,6 +99,17 @@
       margin: 10px;
       padding: 10px 20px;
     }
+    .circle-list {
+      list-style-type: none;
+      counter-reset: section;
+      padding-left: 0;
+      line-height: 1.6em;
+    }
+    .circle-list li::before {
+      counter-increment: section;
+      content: counter(section, cjk-ideographic) ". ";
+      margin-right: 8px;
+    }
   </style>
 </head>
 <body>
@@ -112,15 +123,15 @@
     <button onclick="showInstruction()">다음</button>
   </div>
   <div class="instruction" id="instruction" style="max-width: 900px; margin: auto; text-align: left; line-height: 1.5em;">
-    <p style="line-height: 1.3em;">
-      ① 본 프로그램은 대학 전공학과에 대한 관심 수준과 고등학교 과목 선택에 대한 이해를 돕기 위해 제작되었습니다.<br>
-      ② 서울시교육청교육정보원에서 발간한 「2022 개정 교육과정 선택과목 안내서」를 참고하였으며, 자세한 사항은 해당 자료를 참고하기 바랍니다.<br>
-      ③ [인문+공통+체육], [자연+공통] 2개 카테고리 중에 하나를 선택하여 64강부터 진행합니다.<br>
-      ④ 공통 8개, 인문 43개, 자연 56개, 체육 5개 학과로 구성하였으며, [인문+공통+체육]은 무작위로 선택된 8개의 학과가 부전승으로 32강에 진출합니다.<br>
-      ⑤ 두 개의 전공학과가 짝(pair)을 이루어 보여지면, 보다 관심이 있는 학과를 선택하기 바랍니다.<br>
-      ⑥ 총 3번의 결과를 누적하여 저장할 수 있고, 3라운드를 마치면 선택한 전공 학과별로 고등학교 선택과목에 대한 안내를 받아볼 수 있습니다.<br>
-      ⑦ 준비가 되었다면 아래 계열을 선택하고 전공학과 이상형 월드컵을 시작하기 바랍니다.
-    </p>
+    <ul class="circle-list">
+      <li>본 프로그램은 대학 전공학과에 대한 관심 수준과 고등학교 과목 선택에 대한 이해를 돕기 위해 제작되었습니다.</li>
+      <li>서울시교육청교육정보원에서 발간한 「2022 개정 교육과정 선택과목 안내서」를 참고하였으며, 자세한 사항은 해당 자료를 참고하기 바랍니다.</li>
+      <li>[인문+공통+체육], [자연+공통] 2개 카테고리 중에 하나를 선택하여 64강부터 진행합니다.</li>
+      <li>공통 8개, 인문 43개, 자연 56개, 체육 5개 학과로 구성하였으며, [인문+공통+체육]은 무작위로 선택된 8개의 학과가 부전승으로 32강에 진출합니다.</li>
+      <li>두 개의 전공학과가 짝(pair)을 이루어 보여지면, 보다 관심이 있는 학과를 선택하기 바랍니다.</li>
+      <li>총 3번의 결과를 누적하여 저장할 수 있고, 3라운드를 마치면 선택한 전공 학과별로 고등학교 선택과목에 대한 안내를 받아볼 수 있습니다.</li>
+      <li>준비가 되었다면 아래 계열을 선택하고 전공학과 이상형 월드컵을 시작하기 바랍니다.</li>
+    </ul>
     <div class="category-select" style="justify-content: flex-start; margin-top: 20px;">
       <button onclick="startCategory('inmun')">인문+공통+체육</button>
       <button onclick="startCategory('jayeon')">자연+공통</button>
