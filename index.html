@@ -1,4 +1,4 @@
-/ver03
+/ver04
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -316,7 +316,7 @@
       const majors = Array.from(checked).map(cb => cb.dataset.major);
       if (majors.length === 0) return alert('선택된 전공이 없습니다');
 
-      const { data, error } = await supabase.from(selectedCategory).select('*').in('major', majors);
+      const { data, error } = await supabaseClient.from(selectedCategory).select('*').in('major', majors);
       if (error) return alert('설명 로딩 실패');
 
       const tableHtml = `<html><head><title>전공 설명</title><meta charset='UTF-8'></head><body><table border='1'><tr><th>전공</th><th>친구</th><th>설명</th></tr>
