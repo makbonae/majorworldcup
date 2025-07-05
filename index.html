@@ -226,7 +226,17 @@
         container.innerHTML = '';
 
         if (index >= pairs.length) {
-          const nextRoundName = `${nextRound.length}강`;
+          let nextRoundName;
+          if (nextRound.length === 24 && roundData.autoPass) {
+            nextRoundName = '32강'; // 실제로는 32강임
+          } else if (nextRound.length === 1) {
+            nextRoundName = '결승'; // 2강은 결승으로 표기
+          } else if (nextRound.length === 0) {
+            nextRoundName = '최종 선택 결과 정리중...';
+          } else {
+            nextRoundName = `${nextRound.length}강`;
+          }
+
           showLoading(nextRoundName);
           setTimeout(() => {
             hideLoading();
