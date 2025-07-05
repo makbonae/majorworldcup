@@ -34,6 +34,17 @@
       color: blue;
       margin-top: 10px;
     }
+    .card {
+      display: inline-block;
+      width: 40%;              /* ✅ 가로는 고정 */
+      margin: 20px;
+      padding: 30px;
+      border: 2px solid #aaa;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+      vertical-align: top;
+    }
     .card-pair {
       display: flex;
       justify-content: center;
@@ -202,27 +213,19 @@
         const cardA = createCard(card1);
         const cardB = createCard(card2);
 
-        container.appendChild(cardA);
-        container.appendChild(cardB);
-
         const wrapper = document.createElement('div');
         wrapper.className = 'card-pair';
         wrapper.appendChild(cardA);
         wrapper.appendChild(cardB);
         container.appendChild(wrapper);
 
-        // ✅ 카드 크기 동기화
+        // ✅ 세로 길이만 동기화 (가로는 40% 고정)
         setTimeout(() => {
           const heightA = cardA.offsetHeight;
           const heightB = cardB.offsetHeight;
-          const widthA = cardA.offsetWidth;
-          const widthB = cardB.offsetWidth;
           const maxHeight = Math.max(heightA, heightB);
-          const maxWidth = Math.max(widthA, widthB);
           cardA.style.height = `${maxHeight}px`;
           cardB.style.height = `${maxHeight}px`;
-          cardA.style.width = `${maxWidth}px`;
-          cardB.style.width = `${maxWidth}px`;
         }, 0);
 
         cardA.onclick = () => { nextRound.push(card1); index += 2; nextPair(); };
