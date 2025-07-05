@@ -107,7 +107,7 @@
 </head>
   
 <body>
-  <div class="input-container" id="inputForm">
+  <div class="input-container" id="inputForm" style="display: flex;">
     <input id="school" placeholder="학교명"> 
     <input id="student_id" placeholder="학번">
     <input id="student_name" placeholder="이름">
@@ -157,7 +157,7 @@
       userInfo.school = document.getElementById('school').value;
       userInfo.id = document.getElementById('student_id').value;
       userInfo.name = document.getElementById('student_name').value;
-      document.getElementById('inputForm').style.display = 'block';
+      document.getElementById('inputForm').style.display = 'none';
       document.getElementById('instruction').style.display = 'block';
     }
 
