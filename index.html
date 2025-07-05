@@ -1,4 +1,4 @@
-/ver12
+/ver13
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -336,37 +336,49 @@
       if (error) return alert('설명 로딩 실패');
 
       let htmlContent = `
-        <html>
-          <head>
-            <title>전공 설명</title>
-            <meta charset='UTF-8'>
-          </head>
-          <body>
-            <div class="pdf-container" id="descriptionArea">
-              <p><strong>${userInfo.school} ${userInfo.id} ${userInfo.name}</strong> 님의 선택한 전공에 대한 안내입니다.</p>
+        <!DOCTYPE html>
+        <html lang="ko">
+        <head>
+          <meta charset="UTF-8">
+          <title>전공 설명</title>
+          <style>
+            body { font-family: sans-serif; font-size: 18px; padding: 20px; line-height: 1.6; }
+            .major-block { margin-bottom: 40px; }
+            .major-title { color: darkorange; font-weight: bold; font-size: 24px; }
+            .section-label { color: dodgerblue; font-weight: bold; }
+            .subject-label { color: skyblue; font-weight: bold; }
+            .section-divider { color: magenta; font-weight: bold; margin: 20px 0 10px; }
+            .print-button { margin-top: 40px; }
+          </style>
+        </head>
+        <body>
+          <p><strong>${userInfo.school} ${userInfo.id} ${userInfo.name}</strong> 님의 선택한 전공에 대한 안내입니다.</p>
       `;
 
       data.forEach((d, i) => {
         htmlContent += `
-          <div style="margin-bottom: 40px;">
-            <div style="margin-bottom: 20px;">
-              <span style="color:darkorange; font-weight: bold; font-size: 24px;">🔖 선택 전공: </span>
-              <span style="font-size: 24px; font-weight: bold;">${d.major}</span>
-            </div>
-            <div style="margin-bottom: 10px;"><span style="color:dodgerblue; font-weight: bold;">1. 전공 학과: </span>${d.major_ref}</div>
-            <div style="margin-bottom: 10px;"><span style="color:dodgerblue; font-weight: bold;">2. 학과 개요: </span>${d.desc}</div>
-            <div style="margin-bottom: 10px;"><span style="color:dodgerblue; font-weight: bold;">3. 유사 학과: </span>${d.friends}</div>
-            <div style="color:magenta; font-weight: bold; margin: 20px 0 10px;">📖 관련 고등학교 선택 과목 예시</div>
-            <div style="margin-bottom: 6px;"><span style="color:dodgerblue; font-weight: bold;">4. 일반 선택 과목: </span>${d.sub1 || '정보 없음'}</div>
-            <div style="margin-bottom: 6px;"><span style="color:dodgerblue; font-weight: bold;">5. 진로 선택 과목: </span>${d.sub2 || '정보 없음'}</div>
-            <div><span style="color:dodgerblue; font-weight: bold;">6. 융합 선택 과목: </span>${d.sub3 || '정보 없음'}</div>
+          <div class="major-block">
+            <div class="major-title">🔖 선택 전공: ${d.major}</div>
+            <div><span class="section-label">1. 전공 학과: </span>${d.major_ref}</div>
+            <div><span class="section-label">2. 학과 개요: </span>${d.desc}</div>
+            <div><span class="section-label">3. 유사 학과: </span>${d.friends}</div>
+            <div class="section-divider">📖 관련 고등학교 선택 과목 예시</div>
+            <div><span class="section-label">4. 일반 선택 과목: </span>${d.sub1 || '정보 없음'}</div>
+            <div><span class="section-label">5. 진로 선택 과목: </span>${d.sub2 || '정보 없음'}</div>
+            <div><span class="subject-label">6. 융합 선택 과목: </span>${d.sub3 || '정보 없음'}</div>
           </div>
         `;
       });
 
-      htmlContent += `</body></html>`;
+      htmlContent += `
+          <div class="print-button">
+            <button onclick="window.print()" style="font-size:18px; padding: 10px 20px;">📄 인쇄하기</button>
+          </div>
+        </body>
+        </html>
+      `;
 
-      const win = window.open();
+      const win = window.open('', '_blank');
       win.document.write(htmlContent);
       win.document.close();
     }
