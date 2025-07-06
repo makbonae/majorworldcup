@@ -109,14 +109,14 @@
     .circle-list li {
       counter-increment: section;
       position: relative;
-      padding-left: 2.5em; /* 리스트 번호 공간 확보 (여백 조정 가능) */
+      padding-left: 1.5em; /* 리스트 번호 공간 확보 (여백 조정 가능) */
       text-indent: 0;
     }
     .circle-list li::before {
       content: counter(section, upper-roman) ".";
       position: absolute;
       left: 0;
-      width: 2.5em;        /* 번호 공간 확보 */
+      width: 1.5em;        /* 번호 공간 확보 */
       display: inline-block;
     }
     .highlight-doc {
@@ -380,7 +380,7 @@
           </style>
         </head>
         <body>
-          <p style="font-size: 24px; margin-bottom: 20px;">
+          <p style="font-size: 24px; margin-bottom: 40px;">
             <strong>${userInfo.school} ${userInfo.id} ${userInfo.name}</strong> 님의 선택한 전공 학과에 대한 안내입니다.
           </p>
       `;
