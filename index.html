@@ -1,4 +1,4 @@
-/ver27
+/ver28
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -341,7 +341,13 @@
         document.getElementById('repeatButton').style.display = 'block';
       } else {
         document.getElementById('pdfButton').innerHTML = `
-          <p style="font-size: 20px; margin-bottom: 10px;">※ 관심 있는 전공 학과에 체크표시를 하고 <strong>설명보기</strong> 버튼을 눌러 보세요.</p>
+          <p style="font-size: 20px; margin-bottom: 10px;">
+          ※ 관심 있는 전공 학과에 체크한 후 <strong>설명보기</strong> 버튼을 눌러보세요.<br>
+             (설명보기는 새 창에서 열리며, <strong>팝업 차단</strong>이 설정된 경우 보이지 않을 수 있습니다.<br>
+          👉 iPad 사용자: [설정] > [Safari] > [팝업 차단] 해제<br>
+          👉 Android 사용자: [Chrome 설정] > [사이트 설정] > [팝업 및 리디렉션] → 허용)
+          </p>
+          
           <div>
             <button onclick="downloadPDF()">PDF 저장</button>
             <button onclick="openDescriptions()">설명보기</button>
